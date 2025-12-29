@@ -597,80 +597,138 @@ export default function App() {
         )}
         {statsA && statsB && (
           <div className="mt-8 bg-gradient-to-br from-zinc-900/80 to-zinc-900/50 rounded-xl p-6 border border-zinc-800/50 backdrop-blur-sm shadow-lg shadow-blue-500/5 hover:border-blue-500/30 transition-colors">
-            <h2 className="text-2xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Constructor History</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center justify-between gap-4 mb-6">
+              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Constructor History</h2>
+              <div className="text-xs text-zinc-400">Teams they drove for (by season)</div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <div className="mb-2 text-sm text-zinc-400">Constructor history (A)</div>
-                <ul className="space-y-1 text-sm">
-                  {[...statsA.constructors].sort((a, b) => {
-                    // Sort by the latest season first
-                    const aLatestSeason = Math.max(...a.seasons);
-                    const bLatestSeason = Math.max(...b.seasons);
-                    return bLatestSeason - aLatestSeason;
-                  }).map((c, index, sortedConstructors) => (
-                    <motion.div 
-                      className="p-4 rounded-lg bg-gradient-to-br from-zinc-900/80 to-zinc-900/50 border border-zinc-800/50 hover:border-blue-500/30 transition-colors overflow-hidden relative"
-                      variants={item}
-                    >
-                      {index === 0 && CONSTRUCTOR_CARS[c.constructorId.toLowerCase()] && (
-                        <div className="absolute right-0 top-0 w-32 h-full opacity-75 -mr-4">
-                          <img 
-                            src={CONSTRUCTOR_CARS[c.constructorId.toLowerCase()]} 
-                            alt={`${c.name} car`}
-                            className="w-full h-full object-contain object-right"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-                      <div className="relative z-10">
-                        <li key={`ca-${c.constructorId}`} className="rounded-md bg-zinc-900/50 px-4 py-3 border border-zinc-800/50 hover:border-blue-500/50 transition-colors">
-                          <div className="font-medium">{c.name}</div>
-                          <div className="text-zinc-400">S:{c.starts} • W:{c.wins} • P:{c.podiums} • Pts:{numberFmt(c.points,1)} • Years: {c.seasons.sort((x,y)=>x-y).join(', ')}</div>
-                        </li>
-                      </div>
-                    </motion.div>
-                  ))}
-                </ul>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-medium text-red-400">
+                    {a?.givenName} {a?.familyName}
+                  </div>
+                  <div className="text-xs text-zinc-500">Most recent first</div>
+                </div>
+                <div className="space-y-3">
+                  {[...statsA.constructors]
+                    .sort((x, y) => Math.max(...y.seasons) - Math.max(...x.seasons))
+                    .map((c, index) => {
+                      const seasonsSorted = [...c.seasons].sort((x, y) => x - y)
+                      const from = seasonsSorted[0]
+                      const to = seasonsSorted[seasonsSorted.length - 1]
+                      const yearsLabel = from === to ? `${from}` : `${from}–${to}`
+                      const carSrc = CONSTRUCTOR_CARS[c.constructorId.toLowerCase()]
+                      return (
+                        <motion.div
+                          key={`ca-${c.constructorId}`}
+                          className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-gradient-to-br from-zinc-950/40 to-zinc-900/30 p-4 shadow-sm hover:border-red-500/30 transition-colors"
+                          variants={item}
+                        >
+                          {index === 0 && carSrc && (
+                            <div className="pointer-events-none absolute inset-y-0 right-0 w-40 opacity-60 group-hover:opacity-80 transition-opacity">
+                              <img
+                                src={carSrc}
+                                alt={`${c.name} car`}
+                                className="h-full w-full object-contain object-right"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-zinc-950/70" />
+                            </div>
+                          )}
+
+                          <div className="relative z-10 pr-10">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-zinc-100">{c.name}</div>
+                                <div className="mt-1 inline-flex items-center rounded-full bg-red-600/15 px-2 py-0.5 text-xs font-medium text-red-300 ring-1 ring-red-600/25">
+                                  {yearsLabel}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Starts: {c.starts}</div>
+                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Wins: {c.wins}</div>
+                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Podiums: {c.podiums}</div>
+                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Points: {numberFmt(c.points, 1)}</div>
+                            </div>
+
+                            <div className="mt-2 text-xs text-zinc-500">
+                              Seasons: {seasonsSorted.join(', ')}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                </div>
               </div>
+
               <div>
-                <div className="mb-2 text-sm text-zinc-400">Constructor history (B)</div>
-                <ul className="space-y-1 text-sm">
-                  {[...statsB.constructors].sort((a, b) => {
-                    // Sort by the latest season first
-                    const aLatestSeason = Math.max(...a.seasons);
-                    const bLatestSeason = Math.max(...b.seasons);
-                    return bLatestSeason - aLatestSeason;
-                  }).map((c, index, sortedConstructors) => (
-                    <motion.div 
-                      className="p-4 rounded-lg bg-gradient-to-br from-zinc-900/80 to-zinc-900/50 border border-zinc-800/50 hover:border-blue-500/30 transition-colors overflow-hidden relative"
-                      variants={item}
-                      key={`cb-${c.constructorId}`}
-                    >
-                      {index === 0 && CONSTRUCTOR_CARS[c.constructorId.toLowerCase()] && (
-                        <div className="absolute right-0 top-0 w-32 h-full opacity-75 -mr-4">
-                          <img 
-                            src={CONSTRUCTOR_CARS[c.constructorId.toLowerCase()]} 
-                            alt={`${c.name} car`}
-                            className="w-full h-full object-contain object-right"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.style.display = 'none';
-                            }}
-                          />
-                        </div>
-                      )}
-                      <div className="relative z-10">
-                        <div className="rounded-md bg-zinc-900/50 px-4 py-3 border border-zinc-800/50 hover:border-blue-500/50 transition-colors">
-                          <div className="font-medium">{c.name}</div>
-                          <div className="text-zinc-400">S:{c.starts} • W:{c.wins} • P:{c.podiums} • Pts:{numberFmt(c.points,1)} • Years: {c.seasons.sort((x,y)=>x-y).join(', ')}</div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </ul>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-medium text-blue-400">
+                    {b?.givenName} {b?.familyName}
+                  </div>
+                  <div className="text-xs text-zinc-500">Most recent first</div>
+                </div>
+                <div className="space-y-3">
+                  {[...statsB.constructors]
+                    .sort((x, y) => Math.max(...y.seasons) - Math.max(...x.seasons))
+                    .map((c, index) => {
+                      const seasonsSorted = [...c.seasons].sort((x, y) => x - y)
+                      const from = seasonsSorted[0]
+                      const to = seasonsSorted[seasonsSorted.length - 1]
+                      const yearsLabel = from === to ? `${from}` : `${from}–${to}`
+                      const carSrc = CONSTRUCTOR_CARS[c.constructorId.toLowerCase()]
+                      return (
+                        <motion.div
+                          key={`cb-${c.constructorId}`}
+                          className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-gradient-to-br from-zinc-950/40 to-zinc-900/30 p-4 shadow-sm hover:border-blue-500/30 transition-colors"
+                          variants={item}
+                        >
+                          {index === 0 && carSrc && (
+                            <div className="pointer-events-none absolute inset-y-0 right-0 w-40 opacity-60 group-hover:opacity-80 transition-opacity">
+                              <img
+                                src={carSrc}
+                                alt={`${c.name} car`}
+                                className="h-full w-full object-contain object-right"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                }}
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-zinc-950/70" />
+                            </div>
+                          )}
+
+                          <div className="relative z-10 pr-10">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <div className="text-base font-semibold text-zinc-100">{c.name}</div>
+                                <div className="mt-1 inline-flex items-center rounded-full bg-blue-600/15 px-2 py-0.5 text-xs font-medium text-blue-300 ring-1 ring-blue-600/25">
+                                  {yearsLabel}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Starts: {c.starts}</div>
+                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Wins: {c.wins}</div>
+                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Podiums: {c.podiums}</div>
+                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Points: {numberFmt(c.points, 1)}</div>
+                            </div>
+
+                            <div className="mt-2 text-xs text-zinc-500">
+                              Seasons: {seasonsSorted.join(', ')}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
+                </div>
               </div>
             </div>
           </div>
