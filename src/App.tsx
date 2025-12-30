@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import DriverSelect from './components/DriverSelect'
 import { getDriverStats, getHeadToHead, setLiveMode } from './lib/ergast'
@@ -209,6 +209,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [h2h, setH2h] = useState<HeadToHead | null>(null)
   const [live, setLive] = useState(false)
+  const [showSeasonA, setShowSeasonA] = useState(false)
+  const [showSeasonB, setShowSeasonB] = useState(false)
   const [darkMode, setDarkMode] = useState(() => {
     // Check for saved preference or system preference
     if (typeof window !== 'undefined') {
@@ -463,7 +465,7 @@ export default function App() {
             animate="show"
             key={`${a?.driverId}-${b?.driverId}`}
           >
-            <motion.div className="space-y-4 bg-white/70 dark:bg-black p-6 rounded-xl border border-zinc-200/70 dark:border-zinc-800/50 hover:border-blue-500/30 transition-colors backdrop-blur-sm" variants={item}>
+            <motion.div className="space-y-4 bg-gradient-to-br from-white/90 to-white/70 dark:from-black/90 dark:to-black/70 p-6 rounded-xl border border-zinc-200/70 dark:border-zinc-800/50 hover:border-blue-500/30 transition-all duration-300 backdrop-blur-sm shadow-lg shadow-zinc-200/20 dark:shadow-black/40" variants={item}>
               <div className="relative">
                 <DriverSelect label="Driver A" value={a} onChange={setA} disabled={loadingA} />
               </div>
@@ -476,18 +478,18 @@ export default function App() {
                 </div>
               ) : statsA && (
                 <motion.div 
-                  className="w-full rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/95 dark:bg-zinc-950/80 px-5 py-4 text-zinc-900 dark:text-white shadow-sm transition-colors duration-200"
+                  className="w-full rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-gradient-to-br from-white/95 to-white/90 dark:from-zinc-950/90 dark:to-zinc-950/80 px-5 py-4 text-zinc-900 dark:text-white shadow-lg shadow-zinc-300/30 dark:shadow-black/50 transition-all duration-300 hover:shadow-xl hover:shadow-zinc-400/40 dark:hover:shadow-black/60"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="relative mb-5 flex items-start justify-between gap-4">
+                  <div className="relative mb-6 flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="text-2xl font-semibold leading-tight tracking-tight">
+                      <h2 className="text-3xl font-bold leading-none tracking-tight font-[system-ui]">
                         <span className="text-zinc-900 dark:text-zinc-50">{statsA.driver.givenName}</span>{' '}
-                        <span className="text-red-500">{statsA.driver.familyName}</span>
+                        <span className="text-red-500 font-black uppercase">{statsA.driver.familyName}</span>
                       </h2>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-500">
+                      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-mono">
                         Driver A Summary
                       </p>
                     </div>
@@ -508,61 +510,191 @@ export default function App() {
                       );
                     })()}
                   </div>
-                  <div className="mt-6 overflow-hidden rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 bg-zinc-50/50 dark:bg-zinc-900/50">
-                    <table className="w-full text-sm">
+                  <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-gradient-to-br from-zinc-50/60 to-zinc-50/40 dark:from-zinc-900/60 dark:to-zinc-900/40 shadow-md shadow-zinc-200/20 dark:shadow-black/30">
+                    <table className="w-full text-xs">
                       <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-700/60">
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300 w-1/2">Races</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.starts)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Races</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.starts)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Wins</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.wins)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Wins</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.wins)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Podiums</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.podiums)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Podiums</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.podiums)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Poles</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.poles)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Poles</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.poles)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Fastest Laps</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.fastestLaps)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Fastest Laps</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.fastestLaps)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Points</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.points, 1)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">DNFs</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.dnfs)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">World Championships</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.championships)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">DNF Rate</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">
+                            {statsA.starts > 0 ? ((statsA.dnfs / statsA.starts) * 100).toFixed(1) : '0.0'}%
+                          </td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Best Finish</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{statsA.bestFinish ? statsA.bestFinish : '—'}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Championships</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{statsA.championships || 0}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Best Grid</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{statsA.bestGrid ? statsA.bestGrid : '—'}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Avg Finish</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">
+                            {statsA.avgFinish ? statsA.avgFinish.toFixed(2) : '—'}
+                          </td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Top 10 Finishes</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.top10)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Avg Grid</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">
+                            {statsA.avgGrid ? statsA.avgGrid.toFixed(2) : '—'}
+                          </td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Front Row Starts</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.frontRow)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Points</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.points, 1)}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">World Championships</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.championships)}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Best Finish</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{statsA.bestFinish ? statsA.bestFinish : '—'}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Best Grid</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{statsA.bestGrid ? statsA.bestGrid : '—'}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Top 10 Finishes</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.top10)}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Front Row Starts</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsA.frontRow)}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                 </motion.div>
               )}
+
+              {/* Season-by-season breakdown – Driver A */}
+              {statsA && (
+                <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-gradient-to-br from-zinc-50/50 to-zinc-50/30 dark:from-zinc-900/50 dark:to-zinc-900/30 shadow-md shadow-zinc-200/20 dark:shadow-black/30">
+                  <button
+                    onClick={() => setShowSeasonA(!showSeasonA)}
+                    className="w-full px-4 pt-4 pb-3 flex items-center justify-center hover:bg-zinc-100/50 dark:hover:bg-zinc-900/50 transition-all duration-200"
+                  >
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-mono">
+                      Season-by-season breakdown
+                    </h3>
+                    <motion.svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 text-zinc-500 dark:text-zinc-400 transition-transform ml-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      animate={{ rotate: showSeasonA ? 180 : 0 }}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </motion.svg>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {showSeasonA && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4">
+                          <div className="overflow-x-auto -mx-4 px-4">
+                            <table className="w-full min-w-[400px] text-[10px]">
+                              <thead className="bg-zinc-100/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400">
+                                <tr>
+                                  <th className="py-1.5 text-left font-medium">Season</th>
+                                  <th className="py-1.5 text-center font-medium">Starts</th>
+                                  <th className="py-1.5 text-center font-medium">Wins</th>
+                                  <th className="py-1.5 text-center font-medium">Podiums</th>
+                                  <th className="py-1.5 text-center font-medium">Poles</th>
+                                  <th className="py-1.5 text-center font-medium">Fastest</th>
+                                  <th className="py-1.5 text-center font-medium">Points</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800/60">
+                                {[...statsA.seasons]
+                                  .slice()
+                                  .sort((a, b) => b.season - a.season)
+                                  .map(season => (
+                                    <tr key={season.season} className="hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60">
+                                      <td className="py-1 text-left text-zinc-800 dark:text-zinc-200 font-medium">
+                                        {season.season}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.starts}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.wins}
+                                        {season.wins > 0 && (
+                                          <div className="mt-0.5 h-1 bg-red-500/30 rounded-full overflow-hidden">
+                                            <div 
+                                              className="h-full bg-red-500 rounded-full"
+                                              style={{ 
+                                                width: `${Math.min(100, (season.wins / Math.max(...statsA.seasons.map(s => s.wins))) * 100)}%` 
+                                              }}
+                                            />
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.podiums}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.poles}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.fastestLaps}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {numberFmt(season.points, 1)}
+                                        {season.points > 0 && (
+                                          <div className="mt-0.5 h-1 bg-green-500/30 rounded-full overflow-hidden">
+                                            <div 
+                                              className="h-full bg-green-500 rounded-full"
+                                              style={{ 
+                                                width: `${Math.min(100, (season.points / Math.max(...statsA.seasons.map(s => s.points))) * 100)}%` 
+                                              }}
+                                            />
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              )}
             </motion.div>
 
-            <motion.div className="space-y-4 bg-white/70 dark:bg-black p-6 rounded-xl border border-zinc-200/70 dark:border-zinc-800/50 hover:border-blue-500/30 transition-colors backdrop-blur-sm" variants={item}>
+            <motion.div className="space-y-4 bg-gradient-to-br from-white/90 to-white/70 dark:from-black/90 dark:to-black/70 p-6 rounded-xl border border-zinc-200/70 dark:border-zinc-800/50 hover:border-blue-500/30 transition-all duration-300 backdrop-blur-sm shadow-lg shadow-zinc-200/20 dark:shadow-black/40" variants={item}>
               <div className="relative">
                 <DriverSelect label="Driver B" value={b} onChange={setB} disabled={loadingB} />
               </div>
@@ -575,18 +707,18 @@ export default function App() {
                 </div>
               ) : statsB && (
                 <motion.div 
-                  className="w-full rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/95 dark:bg-zinc-950/80 px-5 py-4 text-zinc-900 dark:text-white shadow-sm transition-colors duration-200"
+                  className="w-full rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-gradient-to-br from-white/95 to-white/90 dark:from-zinc-950/90 dark:to-zinc-950/80 px-5 py-4 text-zinc-900 dark:text-white shadow-lg shadow-zinc-300/30 dark:shadow-black/50 transition-all duration-300 hover:shadow-xl hover:shadow-zinc-400/40 dark:hover:shadow-black/60"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
                 >
-                  <div className="relative mb-5 flex items-start justify-between gap-4">
+                  <div className="relative mb-6 flex items-start justify-between gap-4">
                     <div>
-                      <h2 className="text-2xl font-semibold leading-tight tracking-tight">
+                      <h2 className="text-3xl font-bold leading-none tracking-tight font-[system-ui]">
                         <span className="text-zinc-900 dark:text-zinc-50">{statsB.driver.givenName}</span>{' '}
-                        <span className="text-blue-400">{statsB.driver.familyName}</span>
+                        <span className="text-blue-400 font-black uppercase">{statsB.driver.familyName}</span>
                       </h2>
-                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-500">
+                      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-mono">
                         Driver B Summary
                       </p>
                     </div>
@@ -607,57 +739,187 @@ export default function App() {
                       );
                     })()}
                   </div>
-                  <div className="mt-6 overflow-hidden rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 bg-zinc-50/50 dark:bg-zinc-900/50">
-                    <table className="w-full text-sm">
+                  <div className="mt-6 overflow-hidden rounded-xl border border-zinc-200/60 dark:border-zinc-700/60 bg-gradient-to-br from-zinc-50/60 to-zinc-50/40 dark:from-zinc-900/60 dark:to-zinc-900/40 shadow-md shadow-zinc-200/20 dark:shadow-black/30">
+                    <table className="w-full text-xs">
                       <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-700/60">
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300 w-1/2">Races</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.starts)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Races</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.starts)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Wins</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.wins)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Wins</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.wins)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Podiums</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.podiums)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Podiums</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.podiums)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Poles</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.poles)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Poles</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.poles)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Fastest Laps</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.fastestLaps)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Fastest Laps</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.fastestLaps)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Points</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.points, 1)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">DNFs</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.dnfs)}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">World Championships</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.championships)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">DNF Rate</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">
+                            {statsB.starts > 0 ? ((statsB.dnfs / statsB.starts) * 100).toFixed(1) : '0.0'}%
+                          </td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Best Finish</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{statsB.bestFinish ? statsB.bestFinish : '—'}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Championships</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{statsB.championships || 0}</td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Best Grid</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{statsB.bestGrid ? statsB.bestGrid : '—'}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Avg Finish</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">
+                            {statsB.avgFinish ? statsB.avgFinish.toFixed(2) : '—'}
+                          </td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Top 10 Finishes</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.top10)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Avg Grid</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">
+                            {statsB.avgGrid ? statsB.avgGrid.toFixed(2) : '—'}
+                          </td>
                         </tr>
-                        <tr>
-                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Front Row Starts</td>
-                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.frontRow)}</td>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Points</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.points, 1)}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">World Championships</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.championships)}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Best Finish</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{statsB.bestFinish ? statsB.bestFinish : '—'}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Best Grid</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{statsB.bestGrid ? statsB.bestGrid : '—'}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Top 10 Finishes</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.top10)}</td>
+                        </tr>
+                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
+                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Front Row Starts</td>
+                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{numberFmt(statsB.frontRow)}</td>
                         </tr>
                       </tbody>
                     </table>
                   </div>
                 </motion.div>
+              )}
+
+              {/* Season-by-season breakdown – Driver B */}
+              {statsB && (
+                <div className="mt-6 overflow-hidden rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 bg-zinc-50/40 dark:bg-zinc-900/40">
+                  <button
+                    onClick={() => setShowSeasonB(!showSeasonB)}
+                    className="w-full px-4 pt-4 pb-3 flex items-center justify-center hover:bg-zinc-100/50 dark:hover:bg-zinc-900/50 transition-all duration-200"
+                  >
+                    <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-mono">
+                      Season-by-season breakdown
+                    </h3>
+                    <motion.svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="h-4 w-4 text-zinc-500 dark:text-zinc-400 transition-transform ml-2"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      animate={{ rotate: showSeasonB ? 180 : 0 }}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </motion.svg>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {showSeasonB && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                      >
+                        <div className="px-4 pb-4">
+                          <div className="overflow-x-auto -mx-4 px-4">
+                            <table className="w-full min-w-[400px] text-[10px]">
+                              <thead className="bg-zinc-100/70 dark:bg-zinc-900/70 text-zinc-600 dark:text-zinc-400">
+                                <tr>
+                                  <th className="py-1.5 text-left font-medium">Season</th>
+                                  <th className="py-1.5 text-center font-medium">Starts</th>
+                                  <th className="py-1.5 text-center font-medium">Wins</th>
+                                  <th className="py-1.5 text-center font-medium">Podiums</th>
+                                  <th className="py-1.5 text-center font-medium">Poles</th>
+                                  <th className="py-1.5 text-center font-medium">Fastest</th>
+                                  <th className="py-1.5 text-center font-medium">Points</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-800/60">
+                                {[...statsB.seasons]
+                                  .slice()
+                                  .sort((a, b) => b.season - a.season)
+                                  .map(season => (
+                                    <tr key={season.season} className="hover:bg-zinc-100/60 dark:hover:bg-zinc-900/60">
+                                      <td className="py-1 text-left text-zinc-800 dark:text-zinc-200 font-medium">
+                                        {season.season}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.starts}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.wins}
+                                        {season.wins > 0 && (
+                                          <div className="mt-0.5 h-1 bg-blue-500/30 rounded-full overflow-hidden">
+                                            <div 
+                                              className="h-full bg-blue-500 rounded-full"
+                                              style={{ 
+                                                width: `${Math.min(100, (season.wins / Math.max(...statsB.seasons.map(s => s.wins))) * 100)}%` 
+                                              }}
+                                            />
+                                          </div>
+                                        )}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.podiums}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.poles}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {season.fastestLaps}
+                                      </td>
+                                      <td className="py-1 text-center text-zinc-800 dark:text-zinc-200">
+                                        {numberFmt(season.points, 1)}
+                                        {season.points > 0 && (
+                                          <div className="mt-0.5 h-1 bg-cyan-500/30 rounded-full overflow-hidden">
+                                            <div 
+                                              className="h-full bg-cyan-500 rounded-full"
+                                              style={{ 
+                                                width: `${Math.min(100, (season.points / Math.max(...statsB.seasons.map(s => s.points))) * 100)}%` 
+                                              }}
+                                            />
+                                          </div>
+                                        )}
+                                      </td>
+                                    </tr>
+                                  ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
             </motion.div>
           </motion.div>
@@ -665,19 +927,19 @@ export default function App() {
 
         {bothSelected && h2h && (
           <motion.div 
-            className="mt-8 bg-white/80 dark:bg-black rounded-lg p-6 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-sm"
+            className="mt-8 bg-white/80 dark:bg-black rounded-lg p-4 sm:p-6 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-sm"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <div className="flex items-center gap-2 mb-6">
-              <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">
                 Head to Head - {h2h.racesTogether} Races
               </h2>
-              <div className="group relative">
+              <div className="group relative sm:ml-auto">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-help transition-colors" 
+                  className="h-4 w-4 sm:h-5 sm:w-5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-help transition-colors" 
                   fill="none" 
                   viewBox="0 0 24 24" 
                   stroke="currentColor"
@@ -689,33 +951,33 @@ export default function App() {
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
                   />
                 </svg>
-                <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded-md shadow-lg z-50 w-64 text-center border border-zinc-200 dark:border-zinc-700">
-                  Compares the two drivers' performance in races where they raced together
+                <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 sm:px-3 sm:py-2 bg-zinc-900 dark:bg-zinc-800 text-[10px] sm:text-xs text-white rounded-md shadow-lg z-50 w-48 sm:w-64 text-center border border-zinc-200 dark:border-zinc-700">
+                  Compares drivers in races where they raced together
                   <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-0 border-t-4 border-l-transparent border-r-transparent border-t-zinc-900 dark:border-t-zinc-800"></div>
                 </div>
               </div>
             </div>
             
             {/* Wins Comparison */}
-            <div className="mb-6">
+            <div className="mb-4 sm:mb-6">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Wins</span>
+                <span className="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">Wins</span>
               </div>
-              <div className="relative flex items-center h-8 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-full overflow-visible">
+              <div className="relative flex items-center h-6 sm:h-8 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-full overflow-visible">
                 {/* Driver A Wins */}
                 <div 
-                  className="group h-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-end pr-4 text-white font-medium text-sm transition-all duration-300 relative z-10"
+                  className="group h-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center pr-2 sm:pr-4 text-white font-medium text-[10px] sm:text-sm transition-all duration-300 relative z-10"
                   style={{ width: `${(h2h.a.wins / Math.max(h2h.racesTogether, 1)) * 100}%` }}
                 >
                   {h2h.a.wins > 0 && h2h.a.wins}
-                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
+                  <div className="pointer-events-none absolute top-full mt-1 sm:mt-2 left-1/2 -translate-x-1/2 px-1 py-0.5 sm:px-2 sm:py-1 bg-zinc-900 dark:bg-zinc-800 text-[10px] sm:text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
                     {a?.givenName} {a?.familyName}
                   </div>
                 </div>
                 
                 {/* Other Drivers' Wins (Gray Section) */}
                 <div 
-                  className="group h-full bg-zinc-400 dark:bg-zinc-600 flex items-center justify-center text-white/80 font-medium text-xs transition-all duration-300 relative z-10"
+                  className="group h-full bg-zinc-400 dark:bg-zinc-600 flex items-center justify-center text-white/80 font-medium text-[9px] sm:text-xs transition-all duration-300 relative z-10"
                   style={{ width: `${(Math.max(0, h2h.racesTogether - h2h.a.wins - h2h.b.wins) / Math.max(h2h.racesTogether, 1)) * 100}%` }}
                 >
                   {h2h.racesTogether - h2h.a.wins - h2h.b.wins > 0 && (
@@ -723,8 +985,8 @@ export default function App() {
                       <span className="group-hover:hidden">
                         {h2h.racesTogether - h2h.a.wins - h2h.b.wins}
                       </span>
-                      <span className="hidden group-hover:block">
-                        Other Drivers
+                      <span className="hidden group-hover:block text-[9px] sm:text-xs">
+                        Other
                       </span>
                     </>
                   )}
@@ -732,11 +994,11 @@ export default function App() {
                 
                 {/* Driver B Wins */}
                 <div 
-                  className="group h-full bg-gradient-to-l from-blue-600 to-cyan-500 flex items-center justify-start pl-4 text-white font-medium text-sm transition-all duration-300 relative z-10"
+                  className="group h-full bg-gradient-to-l from-blue-600 to-cyan-500 flex items-center justify-center pl-2 sm:pl-4 text-white font-medium text-[10px] sm:text-sm transition-all duration-300 relative z-10"
                   style={{ width: `${(h2h.b.wins / Math.max(h2h.racesTogether, 1)) * 100}%` }}
                 >
                   {h2h.b.wins > 0 && h2h.b.wins}
-                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
+                  <div className="pointer-events-none absolute top-full mt-1 sm:mt-2 left-1/2 -translate-x-1/2 px-1 py-0.5 sm:px-2 sm:py-1 bg-zinc-900 dark:bg-zinc-800 text-[10px] sm:text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
                     {b?.givenName} {b?.familyName}
                   </div>
                 </div>
@@ -744,21 +1006,21 @@ export default function App() {
             </div>
 
             {/* Head to Head Comparison */}
-            <div className="mb-6">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Head to Head</span>
-                <span className="text-xs text-zinc-500 dark:text-zinc-400">
+            <div className="mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-2 gap-1">
+                <span className="text-xs sm:text-sm font-medium text-zinc-700 dark:text-zinc-300">Head to Head</span>
+                <span className="text-[10px] sm:text-xs text-zinc-500 dark:text-zinc-400">
                   {h2h.bothFinished} race{h2h.bothFinished !== 1 ? 's' : ''} both finished
                 </span>
               </div>
-              <div className="relative flex items-center h-8 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-full overflow-visible">
+              <div className="relative flex items-center h-6 sm:h-8 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-full overflow-visible">
                 {/* Driver A Finished Ahead */}
                 <div 
-                  className="h-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-end pr-4 text-white font-medium text-sm transition-all duration-300 relative z-10"
+                  className="h-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-center pr-2 sm:pr-4 text-white font-medium text-[10px] sm:text-sm transition-all duration-300 relative z-10"
                   style={{ width: `${(h2h.a.finishedAhead / Math.max(h2h.bothFinished, 1)) * 100}%` }}
                 >
                   {h2h.a.finishedAhead > 0 && h2h.a.finishedAhead}
-                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
+                  <div className="pointer-events-none absolute top-full mt-1 sm:mt-2 left-1/2 -translate-x-1/2 px-1 py-0.5 sm:px-2 sm:py-1 bg-zinc-900 dark:bg-zinc-800 text-[10px] sm:text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
                     {a?.givenName} finished ahead {h2h.a.finishedAhead} time{h2h.a.finishedAhead !== 1 ? 's' : ''}
                   </div>
                 </div>
@@ -766,25 +1028,25 @@ export default function App() {
                 {/* Equal Finishes */}
                 {(h2h.bothFinished - h2h.a.finishedAhead - h2h.b.finishedAhead) > 0 && (
                   <div 
-                    className="h-full bg-zinc-600 flex items-center justify-center text-white/80 font-medium text-xs transition-all duration-300 relative z-10"
+                    className="h-full bg-zinc-600 flex items-center justify-center text-white/80 font-medium text-[9px] sm:text-xs transition-all duration-300 relative z-10"
                     style={{ width: `${((h2h.bothFinished - h2h.a.finishedAhead - h2h.b.finishedAhead) / Math.max(h2h.bothFinished, 1)) * 100}%` }}
                   >
                     <span className="group-hover:hidden">
                       {h2h.bothFinished - h2h.a.finishedAhead - h2h.b.finishedAhead}
                     </span>
-                    <span className="hidden group-hover:block">
-                      Equal Finish
+                    <span className="hidden group-hover:block text-[9px] sm:text-xs">
+                      Equal
                     </span>
                   </div>
                 )}
                 
                 {/* Driver B Finished Ahead */}
                 <div 
-                  className="h-full bg-gradient-to-l from-blue-600 to-cyan-500 flex items-center justify-start pl-4 text-white font-medium text-sm transition-all duration-300 relative z-10"
+                  className="h-full bg-gradient-to-l from-blue-600 to-cyan-500 flex items-center justify-center pl-2 sm:pl-4 text-white font-medium text-[10px] sm:text-sm transition-all duration-300 relative z-10"
                   style={{ width: `${(h2h.b.finishedAhead / Math.max(h2h.bothFinished, 1)) * 100}%` }}
                 >
                   {h2h.b.finishedAhead > 0 && h2h.b.finishedAhead}
-                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
+                  <div className="pointer-events-none absolute top-full mt-1 sm:mt-2 left-1/2 -translate-x-1/2 px-1 py-0.5 sm:px-2 sm:py-1 bg-zinc-900 dark:bg-zinc-800 text-[10px] sm:text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
                     {b?.givenName} finished ahead {h2h.b.finishedAhead} time{h2h.b.finishedAhead !== 1 ? 's' : ''}
                   </div>
                 </div>
@@ -792,51 +1054,51 @@ export default function App() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
               {/* Driver A Stats */}
               <div className="space-y-2">
-                <div className="text-center font-medium text-red-400">
+                <div className="text-center font-medium text-red-400 text-xs sm:text-sm">
                   {a?.givenName} {a?.familyName}
                 </div>
-                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                  <div className="text-center text-2xl font-bold">{h2h.a.wins}</div>
-                  <div className="text-center text-sm text-zinc-400">Wins</div>
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-2 sm:p-4 space-y-1 sm:space-y-3">
+                  <div className="text-center text-lg sm:text-2xl font-bold leading-tight">{h2h.a.wins}</div>
+                  <div className="text-center text-[10px] sm:text-sm text-zinc-400">Wins</div>
                 </div>
-                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                  <div className="text-center text-2xl font-bold">{h2h.a.points}</div>
-                  <div className="text-center text-sm text-zinc-400">Points</div>
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-2 sm:p-4 space-y-1 sm:space-y-3">
+                  <div className="text-center text-lg sm:text-2xl font-bold leading-tight">{h2h.a.points}</div>
+                  <div className="text-center text-[10px] sm:text-sm text-zinc-400">Points</div>
                 </div>
-                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                  <div className="text-center text-2xl font-bold">
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-2 sm:p-4 space-y-1 sm:space-y-3">
+                  <div className="text-center text-lg sm:text-2xl font-bold leading-tight">
                     {h2h.a.avgFinish ? h2h.a.avgFinish.toFixed(1) : '—'}
                   </div>
-                  <div className="text-center text-sm text-zinc-400">Avg. Finish</div>
+                  <div className="text-center text-[10px] sm:text-sm text-zinc-400">Avg. Finish</div>
                 </div>
               </div>
 
               {/* VS Separator */}
               <div className="flex items-center justify-center">
-                <div className="text-2xl font-bold text-zinc-600 dark:text-zinc-500">VS</div>
+                <div className="text-lg sm:text-2xl font-bold text-zinc-600 dark:text-zinc-500">VS</div>
               </div>
 
               {/* Driver B Stats */}
               <div className="space-y-2">
-                <div className="text-center font-medium text-blue-400">
+                <div className="text-center font-medium text-blue-400 text-xs sm:text-sm">
                   {b?.givenName} {b?.familyName}
                 </div>
-                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                  <div className="text-center text-2xl font-bold">{h2h.b.wins}</div>
-                  <div className="text-center text-sm text-zinc-400">Wins</div>
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-2 sm:p-4 space-y-1 sm:space-y-3">
+                  <div className="text-center text-lg sm:text-2xl font-bold leading-tight">{h2h.b.wins}</div>
+                  <div className="text-center text-[10px] sm:text-sm text-zinc-400">Wins</div>
                 </div>
-                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                  <div className="text-center text-2xl font-bold">{h2h.b.points}</div>
-                  <div className="text-center text-sm text-zinc-400">Points</div>
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-2 sm:p-4 space-y-1 sm:space-y-3">
+                  <div className="text-center text-lg sm:text-2xl font-bold leading-tight">{h2h.b.points}</div>
+                  <div className="text-center text-[10px] sm:text-sm text-zinc-400">Points</div>
                 </div>
-                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                  <div className="text-center text-2xl font-bold">
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-2 sm:p-4 space-y-1 sm:space-y-3">
+                  <div className="text-center text-lg sm:text-2xl font-bold leading-tight">
                     {h2h.b.avgFinish ? h2h.b.avgFinish.toFixed(1) : '—'}
                   </div>
-                  <div className="text-center text-sm text-zinc-400">Avg. Finish</div>
+                  <div className="text-center text-[10px] sm:text-sm text-zinc-400">Avg. Finish</div>
                 </div>
               </div>
             </div>
