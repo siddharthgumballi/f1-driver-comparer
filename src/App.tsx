@@ -51,7 +51,7 @@ function getConstructorCarUrl(year: number, constructorId: string, constructorNa
 
   const slugById: Record<string, string> = {
     'red_bull': 'red-bull-racing',
-    'alfa': year >= 2024 ? 'kick-sauber' : 'alfa-romeo',  // Changed to kick-sauber for 2024
+    'alfa': year >= 2024 ? 'kick-sauber' : (year === 2021 ? 'alfa' : 'alfa-romeo'),  // 2021 uses 'alfa', 2024+ uses 'kick-sauber'
     'kick_sauber': 'kick-sauber',
     'sauber': 'sauber',
     'alphatauri': year >= 2024 ? 'rb' : 'alphatauri',
@@ -76,9 +76,22 @@ function getConstructorCarUrl(year: number, constructorId: string, constructorNa
       slug = 'kick-sauber'
     }
   }
+  
+  // Special fallback for Alfa Romeo - use specific slugs by year
+  if (!slug || slug === 'alfa') {
+    if (constructorName.toLowerCase().includes('alfa')) {
+      if (year === 2021) {
+        slug = 'alfa'
+      } else if (year >= 2024) {
+        slug = 'kick-sauber'
+      } else {
+        slug = 'alfa-romeo'
+      }
+    }
+  }
 
+  // Use the fallback URL format - these are placeholder images, not actual cars
   const url = `https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/${year}/${slug}.png`
-  console.log('Car URL:', { year, constructorId, constructorName, slug, url })
   return url
 }
 

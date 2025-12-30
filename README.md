@@ -9,25 +9,46 @@ A modern web application for comparing Formula 1 drivers' statistics and head-to
 
 - Compare any two F1 drivers' career statistics
 - Head-to-head race performance comparison
+- **Enhanced Constructor History**: Visual timeline showing team stints with specific statistics for each period
+- **Stint-Specific Statistics**: Each constructor stint shows only the stats from that specific time period
+- **Responsive Driver Stats Table**: Clean, organized table format for driver statistics
+- **Dark/Light Theme Support**: Toggle between dark and light modes
 - Visual progress bars for easy comparison
 - Responsive design that works on all devices
-- Dark theme by default
 - Fast and efficient data loading with caching
 
 ## 📊 Data Sources
 
-- [Ergast API](http://ergast.com/mrd/)
-- [OpenF1 API](https://theoehrly.github.io/OpenF1/)
-- Official F1 media for team car images
+- [Ergast API](http://ergast.com/mrd/) - Primary source for driver and constructor data
+- [OpenF1 API](https://theoehrly.github.io/OpenF1/) - Additional race data and statistics
+- Official F1 media for team car images (placeholder/fallback images)
 
 ## 🛠️ Tech Stack
 
 - ⚛️ React 18
 - 🌈 TypeScript
 - ⚡ Vite
-- 🎨 Tailwind CSS
-- 🎭 Framer Motion
+- 🎨 Tailwind CSS (with dark mode support)
+- 🎭 Framer Motion (animations)
 - 📦 LocalStorage for caching
+
+## 🎨 Recent Major Updates
+
+### Constructor History Enhancement
+- **Split Constructor Stints**: Automatically breaks down continuous periods when drivers switch teams and return
+- **Stint-Specific Stats**: Each stint displays only the statistics from that particular time period
+- **Visual Timeline**: Clean card-based layout showing team transitions
+- **Team Car Images**: Placeholder images for constructor identification (uses fallback images)
+
+### Theme System
+- **Dark/Light Mode Toggle**: Full theme switching capability
+- **Persistent Theme Preference**: Saves user's theme choice in localStorage
+- **Consistent Styling**: Proper dark/light mode support across all components
+
+### UI Improvements
+- **Table-Based Driver Stats**: Replaced grid layout with clean, organized table format
+- **Enhanced Visual Design**: Improved borders, backgrounds, and spacing
+- **Better Color Scheme**: Consistent color usage in both light and dark modes
 
 ## 🚀 Quick Start
 
@@ -65,6 +86,13 @@ The build artifacts will be stored in the `dist/` directory.
 - The application uses browser's localStorage for caching API responses with a 24-hour TTL
 - All driver selections are reflected in the URL for easy sharing
 - The app is designed to be fully responsive and works on mobile devices
+- **Constructor Images**: Currently uses fallback placeholder images from F1 media (not actual car photos)
+- **Theme Persistence**: Dark/light mode preference is saved and restored on revisit
+
+## 🐛 Known Issues
+
+- **Car Images**: F1 media car images show placeholder/fallback images instead of actual car photos due to authentication restrictions
+- **Image URL Structure**: F1's actual car images require authentication or use a different CDN structure
 
 ## 🤝 Contributing
 
