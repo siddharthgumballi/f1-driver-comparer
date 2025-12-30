@@ -23,6 +23,136 @@ const CONSTRUCTOR_CARS: Record<string, string> = {
   'haas': 'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/haas-f1-team.png'
 }
 
+const CURRENT_SEASON = 2025
+
+function constructorSlugFromName(name: string) {
+  const n = name.trim().toLowerCase()
+  if (n === 'red bull') return 'red-bull-racing'
+  if (n === 'alfa romeo') return 'alfa-romeo'
+  if (n === 'toro rosso') return 'toro-rosso'
+  if (n === 'force india') return 'force-india'
+  if (n === 'racing point') return 'racing-point'
+  if (n === 'alphatauri') return 'alphatauri'
+  if (n === 'rb') return 'rb'
+  if (n === 'kick sauber') return 'kick-sauber'
+  if (n === 'sauber') return 'sauber'
+  if (n === 'bmw sauber') return 'bmw-sauber'
+  if (n === 'aston martin') return 'aston-martin'
+  return n
+    .replace(/&/g, 'and')
+    .replace(/\./g, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+}
+
+function getConstructorCarUrl(year: number, constructorId: string, constructorName: string) {
+  const id = constructorId.toLowerCase()
+  if (year >= CURRENT_SEASON && CONSTRUCTOR_CARS[id]) return CONSTRUCTOR_CARS[id]
+
+  const slugById: Record<string, string> = {
+    'red_bull': 'red-bull-racing',
+    'alfa': year >= 2024 ? 'kick-sauber' : 'alfa-romeo',  // Changed to kick-sauber for 2024
+    'kick_sauber': 'kick-sauber',
+    'sauber': 'sauber',
+    'alphatauri': year >= 2024 ? 'rb' : 'alphatauri',
+    'racing_bulls': 'rb',
+    'rb': 'rb',
+    'toro_rosso': 'toro-rosso',
+  }
+
+  // Try multiple approaches to find the right slug
+  let slug = slugById[id]
+  
+  // If not found by ID, try by name
+  if (!slug) {
+    slug = constructorSlugFromName(constructorName)
+  }
+  
+  // Special case for 2024 - prioritize kick-sauber if name contains sauber or alfa
+  if (year === 2024) {
+    if (constructorName.toLowerCase().includes('kick') || 
+        constructorName.toLowerCase().includes('sauber') || 
+        constructorName.toLowerCase().includes('alfa')) {
+      slug = 'kick-sauber'
+    }
+  }
+
+  const url = `https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/${year}/${slug}.png`
+  console.log('Car URL:', { year, constructorId, constructorName, slug, url })
+  return url
+}
+
+function getDriverCarImage(stats: DriverStats | null, year?: number) {
+  if (!stats) return null
+  const targetYear = year || stats.activeYears?.to
+  if (!targetYear || !stats.constructors?.length) return null
+
+  const pick = [...stats.constructors]
+    .map(c => ({ c, latest: Math.max(...c.seasons) }))
+    .sort((x, y) => y.latest - x.latest)[0]
+  if (!pick) return null
+
+  const constructor = pick.c
+  return {
+    src: getConstructorCarUrl(targetYear, constructor.constructorId, constructor.name),
+    alt: `${constructor.name} ${targetYear} car`,
+  }
+}
+
+function splitConstructorStints(constructors: any[], seasonStats: any[] = []) {
+  const stints: any[] = []
+  
+  constructors.forEach(constructor => {
+    const seasons = [...constructor.seasons].sort((a, b) => a - b)
+    
+    // Split seasons into continuous stints
+    let currentStint = [seasons[0]]
+    
+    for (let i = 1; i < seasons.length; i++) {
+      if (seasons[i] === seasons[i - 1] + 1) {
+        // Continuous season
+        currentStint.push(seasons[i])
+      } else {
+        // Gap found, save current stint and start new one
+        const stintStats = calculateStintStats(currentStint, seasonStats)
+        stints.push({
+          ...constructor,
+          seasons: currentStint,
+          stintId: `${constructor.constructorId}-${currentStint[0]}`,
+          ...stintStats
+        })
+        currentStint = [seasons[i]]
+      }
+    }
+    
+    // Add the last stint
+    if (currentStint.length > 0) {
+      const stintStats = calculateStintStats(currentStint, seasonStats)
+      stints.push({
+        ...constructor,
+        seasons: currentStint,
+        stintId: `${constructor.constructorId}-${currentStint[0]}`,
+        ...stintStats
+      })
+    }
+  })
+  
+  return stints.sort((a, b) => Math.max(...b.seasons) - Math.max(...a.seasons))
+}
+
+function calculateStintStats(stintSeasons: number[], seasonStats: any[]) {
+  const relevantStats = seasonStats.filter(stat => stintSeasons.includes(stat.season))
+  
+  return {
+    starts: relevantStats.reduce((sum, stat) => sum + stat.starts, 0),
+    wins: relevantStats.reduce((sum, stat) => sum + stat.wins, 0),
+    podiums: relevantStats.reduce((sum, stat) => sum + stat.podiums, 0),
+    points: relevantStats.reduce((sum, stat) => sum + stat.points, 0),
+    poles: relevantStats.reduce((sum, stat) => sum + stat.poles, 0),
+    fastestLaps: relevantStats.reduce((sum, stat) => sum + stat.fastestLaps, 0),
+  }
+}
+
 function numberFmt(n: number | null | undefined, digits = 0) {
   if (n === null || n === undefined) return '—';
   return n.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: digits });
@@ -36,9 +166,9 @@ function StatRow({ title, a, b, invert = false }: { title: string; a?: number | 
   const rightBetter = aValue !== null && bValue !== null ? (invert ? (bValue < aValue) : (bValue > aValue)) : false
   return (
     <div className="grid grid-cols-7 items-center gap-3 py-2">
-      <div className={`col-span-3 rounded-md px-3 py-1 ${leftBetter ? 'bg-red-600/20 ring-1 ring-red-600/40' : 'bg-zinc-900/50'}`}>{numberFmt(aValue, Number.isInteger(aValue) ? 0 : 2)}</div>
-      <div className="col-span-1 text-center text-sm text-zinc-400">{title}</div>
-      <div className={`col-span-3 rounded-md px-3 py-1 ${rightBetter ? 'bg-red-600/20 ring-1 ring-red-600/40' : 'bg-zinc-900/50'}`}>{numberFmt(bValue, Number.isInteger(bValue) ? 0 : 2)}</div>
+      <div className={`col-span-3 rounded-md px-3 py-1 ${leftBetter ? 'bg-red-600/20 ring-1 ring-red-600/40' : 'bg-zinc-200/50 dark:bg-zinc-900/50'}`}>{numberFmt(aValue, Number.isInteger(aValue) ? 0 : 2)}</div>
+      <div className="col-span-1 text-center text-sm text-zinc-600 dark:text-zinc-400">{title}</div>
+      <div className={`col-span-3 rounded-md px-3 py-1 ${rightBetter ? 'bg-red-600/20 ring-1 ring-red-600/40' : 'bg-zinc-200/50 dark:bg-zinc-900/50'}`}>{numberFmt(bValue, Number.isInteger(bValue) ? 0 : 2)}</div>
     </div>
   )
 }
@@ -50,8 +180,8 @@ function Stat({ title, value }: { title: string; value?: number | null }) {
     
   return (
     <div className="grid grid-cols-2 gap-4">
-      <div className="text-sm text-zinc-400">{title}</div>
-      <div className="text-sm text-zinc-400">{displayValue}</div>
+      <div className="text-sm text-zinc-600 dark:text-zinc-400">{title}</div>
+      <div className="text-sm text-zinc-800 dark:text-zinc-400">{displayValue}</div>
     </div>
   )
 }
@@ -66,7 +196,26 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [h2h, setH2h] = useState<HeadToHead | null>(null)
   const [live, setLive] = useState(false)
+  const [darkMode, setDarkMode] = useState(() => {
+    // Check for saved preference or system preference
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('darkMode')
+      if (saved !== null) return saved === 'true'
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+    return true
+  })
   const bothSelected = a && b
+
+  useEffect(() => {
+    // Save dark mode preference and apply to document
+    localStorage.setItem('darkMode', darkMode.toString())
+    if (darkMode) {
+      document.documentElement.classList.add('dark')
+    } else {
+      document.documentElement.classList.remove('dark')
+    }
+  }, [darkMode])
 
   useEffect(() => {
     const params = new URLSearchParams(location.search)
@@ -110,23 +259,29 @@ export default function App() {
   useEffect(() => {
     if (a) {
       setError(null)
+      setLoadingA(true)
       getDriverStats(a.driverId)
         .then(s => (live ? overlayOpenF1CurrentSeason(s) : s))
         .then(setStatsA)
         .catch(e => setError(String(e?.message || e)))
+        .finally(() => setLoadingA(false))
     } else {
       setStatsA(null)
+      setLoadingA(false)
     }
   }, [a, live])
   useEffect(() => {
     if (b) {
       setError(null)
+      setLoadingB(true)
       getDriverStats(b.driverId)
         .then(s => (live ? overlayOpenF1CurrentSeason(s) : s))
         .then(setStatsB)
         .catch(e => setError(String(e?.message || e)))
+        .finally(() => setLoadingB(false))
     } else {
       setStatsB(null)
+      setLoadingB(false)
     }
   }, [b, live])
 
@@ -192,11 +347,11 @@ export default function App() {
   } as const;
 
   return (
-    <div className="relative min-h-screen bg-black p-4 md:p-8 overflow-hidden">
+    <div className="relative min-h-screen bg-white dark:bg-black text-zinc-900 dark:text-white p-4 md:p-8 overflow-hidden">
       {/* F1 Track Background */}
-      <div className="absolute inset-0 -z-10 opacity-5">
+      <div className="absolute inset-0 -z-10 opacity-[0.06] dark:opacity-5">
         <div className="absolute inset-0 bg-[url('https://www.formula1.com/etc/designs/fom-website/images/patterns/01-f1-circuit.svg')] bg-cover bg-center"></div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-transparent to-black/80"></div>
+        <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-transparent to-white/85 dark:from-black/80 dark:to-black/80"></div>
       </div>
       <motion.div 
         className="max-w-5xl mx-auto"
@@ -220,7 +375,7 @@ export default function App() {
               F1 Driver Comparer
             </motion.h1>
             <motion.p 
-              className="text-zinc-400"
+              className="text-zinc-600 dark:text-zinc-400"
               initial={{ x: -20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
@@ -247,7 +402,7 @@ export default function App() {
                   checked={live}
                   onChange={e => setLive(e.target.checked)}
                 />
-                <div className={`w-12 h-6 rounded-full shadow-inner transition-all duration-300 ${live ? 'bg-red-600' : 'bg-zinc-700'}`}></div>
+                <div className={`w-12 h-6 rounded-full shadow-inner transition-all duration-300 ${live ? 'bg-red-600' : 'bg-zinc-300 dark:bg-zinc-700'}`}></div>
                 <motion.div
                   className="absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow-md"
                   layout
@@ -255,8 +410,33 @@ export default function App() {
                   style={{ x: live ? 26 : 0 }}
                 ></motion.div>
               </div>
-              <span className={`text-sm font-medium transition-colors ${live ? 'text-red-400' : 'text-zinc-400'}`}>
+              <span className={`text-sm font-medium transition-colors ${live ? 'text-red-400' : 'text-zinc-600 dark:text-zinc-400'}`}>
                 Live Mode {live && '🔴'}
+              </span>
+            </motion.label>
+
+            <motion.label
+              className="flex items-center gap-2 cursor-pointer group"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={darkMode}
+                  onChange={e => setDarkMode(e.target.checked)}
+                />
+                <div className={`w-12 h-6 rounded-full shadow-inner transition-all duration-300 ${darkMode ? 'bg-zinc-700' : 'bg-yellow-400/80'}`}></div>
+                <motion.div
+                  className="absolute left-1 top-1 w-4 h-4 rounded-full bg-white shadow-md"
+                  layout
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                  style={{ x: darkMode ? 26 : 0 }}
+                ></motion.div>
+              </div>
+              <span className={`text-sm font-medium transition-colors ${darkMode ? 'text-zinc-600 dark:text-zinc-400' : 'text-zinc-700'}`}>
+                {darkMode ? 'Dark' : 'Light'} Mode
               </span>
             </motion.label>
           </motion.div>
@@ -270,52 +450,42 @@ export default function App() {
             animate="show"
             key={`${a?.driverId}-${b?.driverId}`}
           >
-            <motion.div className="space-y-4 bg-gradient-to-br from-zinc-900/80 to-zinc-900/50 p-6 rounded-xl border border-zinc-800/50 hover:border-blue-500/30 transition-colors" variants={item}>
+            <motion.div className="space-y-4 bg-white/70 dark:bg-black p-6 rounded-xl border border-zinc-200/70 dark:border-zinc-800/50 hover:border-blue-500/30 transition-colors backdrop-blur-sm" variants={item}>
               <div className="relative">
                 <DriverSelect label="Driver A" value={a} onChange={setA} disabled={loadingA} />
-                {loadingA && (
-                  <motion.div 
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <div className="h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  </motion.div>
-                )}
               </div>
               {loadingA ? (
                 <div className="h-64 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-zinc-400">Loading driver data...</p>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading driver data...</p>
                   </div>
                 </div>
               ) : statsA && (
                 <motion.div 
-                  className="w-full rounded-lg border border-blue-500/30 bg-zinc-900/80 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 backdrop-blur-sm hover:border-blue-500/50"
+                  className="w-full rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/95 dark:bg-zinc-950/80 px-5 py-4 text-zinc-900 dark:text-white shadow-sm transition-colors duration-200"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  <div className="relative mb-4">
-                    <h2 className="text-2xl font-bold">
-                      {statsA.driver.givenName} <span className="text-red-500">{statsA.driver.familyName}</span>
-                    </h2>
+                  <div className="relative mb-5 flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-semibold leading-tight tracking-tight">
+                        <span className="text-zinc-900 dark:text-zinc-50">{statsA.driver.givenName}</span>{' '}
+                        <span className="text-red-500">{statsA.driver.familyName}</span>
+                      </h2>
+                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-500">
+                        Driver A Summary
+                      </p>
+                    </div>
                     {(() => {
-                      // Get the most recent constructor (first in the sorted array)
-                      const latestConstructor = [...(statsA.constructors || [])].sort((a, b) => {
-                        const aLatestSeason = Math.max(...a.seasons);
-                        const bLatestSeason = Math.max(...b.seasons);
-                        return bLatestSeason - aLatestSeason;
-                      })[0];
-                      
-                      return latestConstructor && CONSTRUCTOR_CARS[latestConstructor.constructorId.toLowerCase()] && (
-                        <div className="absolute right-0 top-0 w-24 h-16 opacity-75 -mr-2">
+                      const car = getDriverCarImage(statsA)
+                      return car?.src && (
+                        <div className="shrink-0 -mr-1 rounded-lg bg-zinc-100/80 dark:bg-zinc-900/80 px-2 py-1">
                           <img 
-                            src={CONSTRUCTOR_CARS[latestConstructor.constructorId.toLowerCase()]} 
-                            alt={`${latestConstructor.name} car`}
-                            className="w-full h-full object-contain object-right"
+                            src={car.src} 
+                            alt={car.alt}
+                            className="h-14 w-24 object-contain object-right"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
@@ -325,69 +495,96 @@ export default function App() {
                       );
                     })()}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Stat title="Races" value={statsA.starts} />
-                    <Stat title="Wins" value={statsA.wins} />
-                    <Stat title="Podiums" value={statsA.podiums} />
-                    <Stat title="Poles" value={statsA.poles} />
-                    <Stat title="Fastest Laps" value={statsA.fastestLaps} />
-                    <Stat title="Points" value={statsA.points} />
-                    <Stat title="World Championships" value={statsA.championships} />
-                    <Stat title="Best Finish" value={statsA.bestFinish} />
-                    <Stat title="Best Grid" value={statsA.bestGrid} />
-                    <Stat title="Top 10 Finishes" value={statsA.top10} />
-                    <Stat title="Front Row Starts" value={statsA.frontRow} />
+                  <div className="mt-6 overflow-hidden rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 bg-zinc-50/50 dark:bg-zinc-900/50">
+                    <table className="w-full text-sm">
+                      <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-700/60">
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300 w-1/2">Races</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.starts)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Wins</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.wins)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Podiums</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.podiums)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Poles</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.poles)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Fastest Laps</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.fastestLaps)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Points</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.points, 1)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">World Championships</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.championships)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Best Finish</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{statsA.bestFinish ? statsA.bestFinish : '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Best Grid</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{statsA.bestGrid ? statsA.bestGrid : '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Top 10 Finishes</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.top10)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Front Row Starts</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsA.frontRow)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </motion.div>
               )}
             </motion.div>
 
-            <motion.div className="space-y-4 bg-gradient-to-br from-zinc-900/80 to-zinc-900/50 p-6 rounded-xl border border-zinc-800/50 hover:border-blue-500/30 transition-colors" variants={item}>
+            <motion.div className="space-y-4 bg-white/70 dark:bg-black p-6 rounded-xl border border-zinc-200/70 dark:border-zinc-800/50 hover:border-blue-500/30 transition-colors backdrop-blur-sm" variants={item}>
               <div className="relative">
                 <DriverSelect label="Driver B" value={b} onChange={setB} disabled={loadingB} />
-                {loadingB && (
-                  <motion.div 
-                    className="absolute right-3 top-1/2 -translate-y-1/2"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <div className="h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  </motion.div>
-                )}
               </div>
               {loadingB ? (
                 <div className="h-64 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-2">
                     <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm text-zinc-400">Loading driver data...</p>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading driver data...</p>
                   </div>
                 </div>
               ) : statsB && (
                 <motion.div 
-                  className="w-full rounded-lg border border-blue-500/30 bg-zinc-900/80 px-4 py-2.5 text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-200 backdrop-blur-sm hover:border-blue-500/50"
+                  className="w-full rounded-xl border border-zinc-200/70 dark:border-zinc-800/70 bg-white/95 dark:bg-zinc-950/80 px-5 py-4 text-zinc-900 dark:text-white shadow-sm transition-colors duration-200"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.1 }}
                 >
-                  <div className="relative mb-4">
-                    <h2 className="text-2xl font-bold">
-                      {statsB.driver.givenName} <span className="text-blue-400">{statsB.driver.familyName}</span>
-                    </h2>
+                  <div className="relative mb-5 flex items-start justify-between gap-4">
+                    <div>
+                      <h2 className="text-2xl font-semibold leading-tight tracking-tight">
+                        <span className="text-zinc-900 dark:text-zinc-50">{statsB.driver.givenName}</span>{' '}
+                        <span className="text-blue-400">{statsB.driver.familyName}</span>
+                      </h2>
+                      <p className="mt-1 text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-zinc-500">
+                        Driver B Summary
+                      </p>
+                    </div>
                     {(() => {
-                      // Get the most recent constructor (first in the sorted array)
-                      const latestConstructor = [...(statsB.constructors || [])].sort((a, b) => {
-                        const aLatestSeason = Math.max(...a.seasons);
-                        const bLatestSeason = Math.max(...b.seasons);
-                        return bLatestSeason - aLatestSeason;
-                      })[0];
-                      
-                      return latestConstructor && CONSTRUCTOR_CARS[latestConstructor.constructorId.toLowerCase()] && (
-                        <div className="absolute right-0 top-0 w-24 h-16 opacity-75 -mr-2">
+                      const car = getDriverCarImage(statsB)
+                      return car?.src && (
+                        <div className="shrink-0 -mr-1 rounded-lg bg-zinc-100/80 dark:bg-zinc-900/80 px-2 py-1">
                           <img 
-                            src={CONSTRUCTOR_CARS[latestConstructor.constructorId.toLowerCase()]} 
-                            alt={`${latestConstructor.name} car`}
-                            className="w-full h-full object-contain object-right"
+                            src={car.src} 
+                            alt={car.alt}
+                            className="h-14 w-24 object-contain object-right"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.style.display = 'none';
@@ -397,18 +594,55 @@ export default function App() {
                       );
                     })()}
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <Stat title="Races" value={statsB.starts} />
-                    <Stat title="Wins" value={statsB.wins} />
-                    <Stat title="Podiums" value={statsB.podiums} />
-                    <Stat title="Poles" value={statsB.poles} />
-                    <Stat title="Fastest Laps" value={statsB.fastestLaps} />
-                    <Stat title="Points" value={statsB.points} />
-                    <Stat title="World Championships" value={statsB.championships} />
-                    <Stat title="Best Finish" value={statsB.bestFinish} />
-                    <Stat title="Best Grid" value={statsB.bestGrid} />
-                    <Stat title="Top 10 Finishes" value={statsB.top10} />
-                    <Stat title="Front Row Starts" value={statsB.frontRow} />
+                  <div className="mt-6 overflow-hidden rounded-lg border border-zinc-200/60 dark:border-zinc-700/60 bg-zinc-50/50 dark:bg-zinc-900/50">
+                    <table className="w-full text-sm">
+                      <tbody className="divide-y divide-zinc-200/60 dark:divide-zinc-700/60">
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300 w-1/2">Races</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.starts)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Wins</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.wins)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Podiums</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.podiums)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Poles</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.poles)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Fastest Laps</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.fastestLaps)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Points</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.points, 1)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">World Championships</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.championships)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Best Finish</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{statsB.bestFinish ? statsB.bestFinish : '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Best Grid</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{statsB.bestGrid ? statsB.bestGrid : '—'}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Top 10 Finishes</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.top10)}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-4 py-2.5 font-medium text-zinc-700 dark:text-zinc-300">Front Row Starts</td>
+                          <td className="px-4 py-2.5 text-right text-zinc-900 dark:text-zinc-100 font-medium">{numberFmt(statsB.frontRow)}</td>
+                        </tr>
+                      </tbody>
+                    </table>
                   </div>
                 </motion.div>
               )}
@@ -418,7 +652,7 @@ export default function App() {
 
         {bothSelected && h2h && (
           <motion.div 
-            className="mt-8 bg-zinc-900/50 rounded-lg p-6 border border-zinc-800/50"
+            className="mt-8 bg-white/80 dark:bg-black rounded-lg p-6 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-sm"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
@@ -430,7 +664,7 @@ export default function App() {
               <div className="group relative">
                 <svg 
                   xmlns="http://www.w3.org/2000/svg" 
-                  className="h-5 w-5 text-zinc-400 hover:text-zinc-200 cursor-help transition-colors" 
+                  className="h-5 w-5 text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 cursor-help transition-colors" 
                   fill="none" 
                   viewBox="0 0 24 24" 
                   stroke="currentColor"
@@ -442,9 +676,9 @@ export default function App() {
                     d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" 
                   />
                 </svg>
-                <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-800 text-xs text-white rounded-md shadow-lg z-50 w-64 text-center">
+                <div className="hidden group-hover:block absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded-md shadow-lg z-50 w-64 text-center border border-zinc-200 dark:border-zinc-700">
                   Compares the two drivers' performance in races where they raced together
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-0 border-t-4 border-l-transparent border-r-transparent border-t-zinc-800"></div>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-0 border-t-4 border-l-transparent border-r-transparent border-t-zinc-900 dark:border-t-zinc-800"></div>
                 </div>
               </div>
             </div>
@@ -452,23 +686,23 @@ export default function App() {
             {/* Wins Comparison */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-zinc-300">Wins</span>
+                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Wins</span>
               </div>
-              <div className="relative flex items-center h-8 bg-zinc-800/50 rounded-full overflow-visible">
+              <div className="relative flex items-center h-8 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-full overflow-visible">
                 {/* Driver A Wins */}
                 <div 
                   className="group h-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-end pr-4 text-white font-medium text-sm transition-all duration-300 relative z-10"
                   style={{ width: `${(h2h.a.wins / Math.max(h2h.racesTogether, 1)) * 100}%` }}
                 >
                   {h2h.a.wins > 0 && h2h.a.wins}
-                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-700 shadow-lg">
+                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
                     {a?.givenName} {a?.familyName}
                   </div>
                 </div>
                 
                 {/* Other Drivers' Wins (Gray Section) */}
                 <div 
-                  className="group h-full bg-zinc-600 flex items-center justify-center text-white/80 font-medium text-xs transition-all duration-300 relative z-10"
+                  className="group h-full bg-zinc-400 dark:bg-zinc-600 flex items-center justify-center text-white/80 font-medium text-xs transition-all duration-300 relative z-10"
                   style={{ width: `${(Math.max(0, h2h.racesTogether - h2h.a.wins - h2h.b.wins) / Math.max(h2h.racesTogether, 1)) * 100}%` }}
                 >
                   {h2h.racesTogether - h2h.a.wins - h2h.b.wins > 0 && (
@@ -489,7 +723,7 @@ export default function App() {
                   style={{ width: `${(h2h.b.wins / Math.max(h2h.racesTogether, 1)) * 100}%` }}
                 >
                   {h2h.b.wins > 0 && h2h.b.wins}
-                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-700 shadow-lg">
+                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
                     {b?.givenName} {b?.familyName}
                   </div>
                 </div>
@@ -499,19 +733,19 @@ export default function App() {
             {/* Head to Head Comparison */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium text-zinc-300">Head to Head</span>
-                <span className="text-xs text-zinc-400">
+                <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">Head to Head</span>
+                <span className="text-xs text-zinc-500 dark:text-zinc-400">
                   {h2h.bothFinished} race{h2h.bothFinished !== 1 ? 's' : ''} both finished
                 </span>
               </div>
-              <div className="relative flex items-center h-8 bg-zinc-800/50 rounded-full overflow-visible">
+              <div className="relative flex items-center h-8 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-full overflow-visible">
                 {/* Driver A Finished Ahead */}
                 <div 
                   className="h-full bg-gradient-to-r from-red-600 to-red-500 flex items-center justify-end pr-4 text-white font-medium text-sm transition-all duration-300 relative z-10"
                   style={{ width: `${(h2h.a.finishedAhead / Math.max(h2h.bothFinished, 1)) * 100}%` }}
                 >
                   {h2h.a.finishedAhead > 0 && h2h.a.finishedAhead}
-                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-700 shadow-lg">
+                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
                     {a?.givenName} finished ahead {h2h.a.finishedAhead} time{h2h.a.finishedAhead !== 1 ? 's' : ''}
                   </div>
                 </div>
@@ -537,7 +771,7 @@ export default function App() {
                   style={{ width: `${(h2h.b.finishedAhead / Math.max(h2h.bothFinished, 1)) * 100}%` }}
                 >
                   {h2h.b.finishedAhead > 0 && h2h.b.finishedAhead}
-                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-700 shadow-lg">
+                  <div className="pointer-events-none absolute top-full mt-2 left-1/2 -translate-x-1/2 px-2 py-1 bg-zinc-900 dark:bg-zinc-800 text-xs text-white rounded opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap z-50 border border-zinc-200 dark:border-zinc-700 shadow-lg">
                     {b?.givenName} finished ahead {h2h.b.finishedAhead} time{h2h.b.finishedAhead !== 1 ? 's' : ''}
                   </div>
                 </div>
@@ -551,15 +785,15 @@ export default function App() {
                 <div className="text-center font-medium text-red-400">
                   {a?.givenName} {a?.familyName}
                 </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
                   <div className="text-center text-2xl font-bold">{h2h.a.wins}</div>
                   <div className="text-center text-sm text-zinc-400">Wins</div>
                 </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
                   <div className="text-center text-2xl font-bold">{h2h.a.points}</div>
                   <div className="text-center text-sm text-zinc-400">Points</div>
                 </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
                   <div className="text-center text-2xl font-bold">
                     {h2h.a.avgFinish ? h2h.a.avgFinish.toFixed(1) : '—'}
                   </div>
@@ -569,7 +803,7 @@ export default function App() {
 
               {/* VS Separator */}
               <div className="flex items-center justify-center">
-                <div className="text-2xl font-bold text-zinc-500">VS</div>
+                <div className="text-2xl font-bold text-zinc-600 dark:text-zinc-500">VS</div>
               </div>
 
               {/* Driver B Stats */}
@@ -577,15 +811,15 @@ export default function App() {
                 <div className="text-center font-medium text-blue-400">
                   {b?.givenName} {b?.familyName}
                 </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
                   <div className="text-center text-2xl font-bold">{h2h.b.wins}</div>
                   <div className="text-center text-sm text-zinc-400">Wins</div>
                 </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
                   <div className="text-center text-2xl font-bold">{h2h.b.points}</div>
                   <div className="text-center text-sm text-zinc-400">Points</div>
                 </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
+                <div className="bg-zinc-100 dark:bg-zinc-800/50 rounded-lg p-4 space-y-3">
                   <div className="text-center text-2xl font-bold">
                     {h2h.b.avgFinish ? h2h.b.avgFinish.toFixed(1) : '—'}
                   </div>
@@ -596,10 +830,10 @@ export default function App() {
           </motion.div>
         )}
         {statsA && statsB && (
-          <div className="mt-8 bg-gradient-to-br from-zinc-900/80 to-zinc-900/50 rounded-xl p-6 border border-zinc-800/50 backdrop-blur-sm shadow-lg shadow-blue-500/5 hover:border-blue-500/30 transition-colors">
+          <div className="mt-8 bg-white/80 dark:bg-black rounded-xl p-6 border border-zinc-200/50 dark:border-zinc-800/50 backdrop-blur-sm shadow-lg shadow-blue-500/5 hover:border-blue-500/30 transition-colors">
             <div className="flex items-center justify-between gap-4 mb-6">
               <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">Constructor History</h2>
-              <div className="text-xs text-zinc-400">Teams they drove for (by season)</div>
+              <div className="text-xs text-zinc-500 dark:text-zinc-400">Teams they drove for (by season)</div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -608,62 +842,60 @@ export default function App() {
                   <div className="text-sm font-medium text-red-400">
                     {a?.givenName} {a?.familyName}
                   </div>
-                  <div className="text-xs text-zinc-500">Most recent first</div>
+                  <div className="text-xs text-zinc-600 dark:text-zinc-500">Most recent first</div>
                 </div>
                 <div className="space-y-3">
-                  {[...statsA.constructors]
-                    .sort((x, y) => Math.max(...y.seasons) - Math.max(...x.seasons))
-                    .map((c, index) => {
-                      const seasonsSorted = [...c.seasons].sort((x, y) => x - y)
-                      const from = seasonsSorted[0]
-                      const to = seasonsSorted[seasonsSorted.length - 1]
-                      const yearsLabel = from === to ? `${from}` : `${from}–${to}`
-                      const carSrc = CONSTRUCTOR_CARS[c.constructorId.toLowerCase()]
-                      return (
-                        <motion.div
-                          key={`ca-${c.constructorId}`}
-                          className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-gradient-to-br from-zinc-950/40 to-zinc-900/30 p-4 shadow-sm hover:border-red-500/30 transition-colors"
-                          variants={item}
-                        >
-                          {index === 0 && carSrc && (
-                            <div className="pointer-events-none absolute inset-y-0 right-0 w-40 opacity-60 group-hover:opacity-80 transition-opacity">
-                              <img
-                                src={carSrc}
-                                alt={`${c.name} car`}
-                                className="h-full w-full object-contain object-right"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement
-                                  target.style.display = 'none'
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-zinc-950/70" />
-                            </div>
-                          )}
+                  {splitConstructorStints(statsA.constructors, statsA.seasons || []).map((stint, index) => {
+                    const seasonsSorted = [...stint.seasons].sort((x, y) => x - y)
+                    const from = seasonsSorted[0]
+                    const to = seasonsSorted[seasonsSorted.length - 1]
+                    const yearsLabel = from === to ? `${from}` : `${from}–${to}`
+                    // Use the driver's most recent year for the car image, not the stint's first year
+                    const carSrc = getConstructorCarUrl(statsA.activeYears?.to || to, stint.constructorId, stint.name)
+                    
+                    return (
+                      <motion.div
+                        key={stint.stintId}
+                        className="group relative overflow-hidden rounded-xl border border-zinc-300/60 dark:border-zinc-800/60 bg-white dark:bg-black p-4 shadow-sm hover:border-red-500/30 transition-colors"
+                        variants={item}
+                      >
+                        {index === 0 && carSrc && (
+                          <div className="pointer-events-none absolute inset-y-0 right-0 w-40 opacity-60 group-hover:opacity-80 transition-opacity">
+                            <img
+                              src={carSrc}
+                              alt={`${stint.name} ${statsA.activeYears?.to || to} car`}
+                              className="h-full w-full object-contain object-right"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-white/70 dark:to-black/70" />
+                          </div>
+                        )}
 
-                          <div className="relative z-10 pr-10">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="text-base font-semibold text-zinc-100">{c.name}</div>
-                                <div className="mt-1 inline-flex items-center rounded-full bg-red-600/15 px-2 py-0.5 text-xs font-medium text-red-300 ring-1 ring-red-600/25">
-                                  {yearsLabel}
-                                </div>
+                        <div className="relative z-10 pr-10">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{stint.name}</div>
+                              <div className="mt-1 inline-flex items-center rounded-full bg-red-600/15 px-2 py-0.5 text-xs font-medium text-red-300 ring-1 ring-red-600/25">
+                                {yearsLabel}
                               </div>
                             </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Starts: {c.starts}</div>
-                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Wins: {c.wins}</div>
-                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Podiums: {c.podiums}</div>
-                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Points: {numberFmt(c.points, 1)}</div>
-                            </div>
-
-                            <div className="mt-2 text-xs text-zinc-500">
-                              Seasons: {seasonsSorted.join(', ')}
-                            </div>
                           </div>
-                        </motion.div>
-                      )
-                    })}
+
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            <div className="rounded-full bg-zinc-200/60 dark:bg-zinc-900/60 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-zinc-800/60">Starts: {stint.starts}</div>
+                            <div className="rounded-full bg-zinc-200/60 dark:bg-zinc-900/60 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-zinc-800/60">Wins: {stint.wins}</div>
+                            <div className="rounded-full bg-zinc-200/60 dark:bg-zinc-900/60 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-zinc-800/60">Podiums: {stint.podiums}</div>
+                            <div className="rounded-full bg-zinc-200/60 dark:bg-zinc-900/60 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-zinc-800/60">Points: {numberFmt(stint.points, 1)}</div>
+                          </div>
+
+                          <div className="text-sm text-zinc-600 dark:text-zinc-500">Seasons: {seasonsSorted.join(', ')}</div>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
                 </div>
               </div>
 
@@ -672,62 +904,60 @@ export default function App() {
                   <div className="text-sm font-medium text-blue-400">
                     {b?.givenName} {b?.familyName}
                   </div>
-                  <div className="text-xs text-zinc-500">Most recent first</div>
+                  <div className="text-xs text-zinc-600 dark:text-zinc-500">Most recent first</div>
                 </div>
                 <div className="space-y-3">
-                  {[...statsB.constructors]
-                    .sort((x, y) => Math.max(...y.seasons) - Math.max(...x.seasons))
-                    .map((c, index) => {
-                      const seasonsSorted = [...c.seasons].sort((x, y) => x - y)
-                      const from = seasonsSorted[0]
-                      const to = seasonsSorted[seasonsSorted.length - 1]
-                      const yearsLabel = from === to ? `${from}` : `${from}–${to}`
-                      const carSrc = CONSTRUCTOR_CARS[c.constructorId.toLowerCase()]
-                      return (
-                        <motion.div
-                          key={`cb-${c.constructorId}`}
-                          className="group relative overflow-hidden rounded-xl border border-zinc-800/60 bg-gradient-to-br from-zinc-950/40 to-zinc-900/30 p-4 shadow-sm hover:border-blue-500/30 transition-colors"
-                          variants={item}
-                        >
-                          {index === 0 && carSrc && (
-                            <div className="pointer-events-none absolute inset-y-0 right-0 w-40 opacity-60 group-hover:opacity-80 transition-opacity">
-                              <img
-                                src={carSrc}
-                                alt={`${c.name} car`}
-                                className="h-full w-full object-contain object-right"
-                                onError={(e) => {
-                                  const target = e.target as HTMLImageElement
-                                  target.style.display = 'none'
-                                }}
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-zinc-950/70" />
-                            </div>
-                          )}
+                  {splitConstructorStints(statsB.constructors, statsB.seasons || []).map((stint, index) => {
+                    const seasonsSorted = [...stint.seasons].sort((x, y) => x - y)
+                    const from = seasonsSorted[0]
+                    const to = seasonsSorted[seasonsSorted.length - 1]
+                    const yearsLabel = from === to ? `${from}` : `${from}–${to}`
+                    // Use the driver's most recent year for the car image, not the stint's first year
+                    const carSrc = getConstructorCarUrl(statsB.activeYears?.to || to, stint.constructorId, stint.name)
+                    
+                    return (
+                      <motion.div
+                        key={stint.stintId}
+                        className="group relative overflow-hidden rounded-xl border border-zinc-300/60 dark:border-zinc-800/60 bg-white dark:bg-black p-4 shadow-sm hover:border-blue-500/30 transition-colors"
+                        variants={item}
+                      >
+                        {index === 0 && carSrc && (
+                          <div className="pointer-events-none absolute inset-y-0 right-0 w-40 opacity-60 group-hover:opacity-80 transition-opacity">
+                            <img
+                              src={carSrc}
+                              alt={`${stint.name} ${statsB.activeYears?.to || to} car`}
+                              className="h-full w-full object-contain object-right"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement
+                                target.style.display = 'none'
+                              }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-l from-transparent via-transparent to-white/70 dark:to-black/70" />
+                          </div>
+                        )}
 
-                          <div className="relative z-10 pr-10">
-                            <div className="flex items-start justify-between gap-3">
-                              <div>
-                                <div className="text-base font-semibold text-zinc-100">{c.name}</div>
-                                <div className="mt-1 inline-flex items-center rounded-full bg-blue-600/15 px-2 py-0.5 text-xs font-medium text-blue-300 ring-1 ring-blue-600/25">
-                                  {yearsLabel}
-                                </div>
+                        <div className="relative z-10 pr-10">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-base font-semibold text-zinc-900 dark:text-zinc-100">{stint.name}</div>
+                              <div className="mt-1 inline-flex items-center rounded-full bg-blue-600/15 px-2 py-0.5 text-xs font-medium text-blue-300 ring-1 ring-blue-600/25">
+                                {yearsLabel}
                               </div>
                             </div>
-
-                            <div className="mt-3 flex flex-wrap gap-2 text-xs">
-                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Starts: {c.starts}</div>
-                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Wins: {c.wins}</div>
-                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Podiums: {c.podiums}</div>
-                              <div className="rounded-full bg-zinc-900/60 px-2 py-1 text-zinc-200 ring-1 ring-zinc-800/60">Points: {numberFmt(c.points, 1)}</div>
-                            </div>
-
-                            <div className="mt-2 text-xs text-zinc-500">
-                              Seasons: {seasonsSorted.join(', ')}
-                            </div>
                           </div>
-                        </motion.div>
-                      )
-                    })}
+
+                          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                            <div className="rounded-full bg-zinc-200/60 dark:bg-zinc-900/60 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-zinc-800/60">Starts: {stint.starts}</div>
+                            <div className="rounded-full bg-zinc-200/60 dark:bg-zinc-900/60 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-zinc-800/60">Wins: {stint.wins}</div>
+                            <div className="rounded-full bg-zinc-200/60 dark:bg-zinc-900/60 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-zinc-800/60">Podiums: {stint.podiums}</div>
+                            <div className="rounded-full bg-zinc-200/60 dark:bg-zinc-900/60 px-2 py-1 text-zinc-800 dark:text-zinc-200 ring-1 ring-zinc-300/60 dark:ring-zinc-800/60">Points: {numberFmt(stint.points, 1)}</div>
+                          </div>
+
+                          <div className="text-sm text-zinc-600 dark:text-zinc-500">Seasons: {seasonsSorted.join(', ')}</div>
+                        </div>
+                      </motion.div>
+                    )
+                  })}
                 </div>
               </div>
             </div>
