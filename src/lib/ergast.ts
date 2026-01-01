@@ -22,6 +22,14 @@ export type Driver = {
   nationality?: string
 }
 
+const CURRENT_SEASON = 2025
+
+export function getDriverPhotoUrl(driver: Driver): string {
+  // Use family name as slug, remove non-alphabetic chars for URL safety
+  const slug = driver.familyName.toLowerCase().replace(/[^a-z]/g, '')
+  return `https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/${CURRENT_SEASON}Drivers/${slug}.png`
+}
+
 export type SeasonStat = {
   season: number
   starts: number

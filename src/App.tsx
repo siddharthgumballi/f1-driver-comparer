@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import DriverSelect from './components/DriverSelect'
-import { getDriverStats, getHeadToHead, setLiveMode } from './lib/ergast'
+import { getDriverStats, getHeadToHead, setLiveMode, getDriverPhotoUrl } from './lib/ergast'
 import type { Driver, DriverStats, HeadToHead } from './lib/ergast'
 import { overlayOpenF1CurrentSeason } from './lib/openf1'
 
@@ -591,14 +591,22 @@ export default function App() {
                   transition={{ duration: 0.3 }}
                 >
                   <div className="relative mb-6 flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className="text-3xl font-bold leading-none tracking-tight font-[system-ui]">
-                        <span className="text-zinc-900 dark:text-zinc-50">{statsA.driver.givenName}</span>{' '}
-                        <span className="text-red-500 font-black uppercase">{statsA.driver.familyName}</span>
-                      </h2>
-                      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-mono">
-                        Driver A Summary
-                      </p>
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={getDriverPhotoUrl(statsA.driver)} 
+                        alt={`${statsA.driver.givenName} ${statsA.driver.familyName}`}
+                        className="w-20 h-20 rounded-full object-cover border-2 border-red-500/20"
+                        onError={(e) => {(e.target as HTMLImageElement).style.display = 'none'}}
+                      />
+                      <div>
+                        <h2 className="text-3xl font-bold leading-none tracking-tight font-[system-ui]">
+                          <span className="text-zinc-900 dark:text-zinc-50">{statsA.driver.givenName}</span>{' '}
+                          <span className="text-red-500 font-black uppercase">{statsA.driver.familyName}</span>
+                        </h2>
+                        <p className="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-mono">
+                          Driver A Summary
+                        </p>
+                      </div>
                     </div>
                     {(() => {
                       const car = getDriverCarImage(statsA)
@@ -927,14 +935,22 @@ export default function App() {
                   transition={{ duration: 0.3, delay: 0.1 }}
                 >
                   <div className="relative mb-6 flex items-start justify-between gap-4">
-                    <div>
-                      <h2 className="text-3xl font-bold leading-none tracking-tight font-[system-ui]">
-                        <span className="text-zinc-900 dark:text-zinc-50">{statsB.driver.givenName}</span>{' '}
-                        <span className="text-blue-400 font-black uppercase">{statsB.driver.familyName}</span>
-                      </h2>
-                      <p className="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-mono">
-                        Driver B Summary
-                      </p>
+                    <div className="flex items-center gap-4">
+                      <img 
+                        src={getDriverPhotoUrl(statsB.driver)} 
+                        alt={`${statsB.driver.givenName} ${statsB.driver.familyName}`}
+                        className="w-20 h-20 rounded-full object-cover border-2 border-blue-500/20"
+                        onError={(e) => {(e.target as HTMLImageElement).style.display = 'none'}}
+                      />
+                      <div>
+                        <h2 className="text-3xl font-bold leading-none tracking-tight font-[system-ui]">
+                          <span className="text-zinc-900 dark:text-zinc-50">{statsB.driver.givenName}</span>{' '}
+                          <span className="text-blue-400 font-black uppercase">{statsB.driver.familyName}</span>
+                        </h2>
+                        <p className="mt-2 text-xs font-bold uppercase tracking-widest text-zinc-500 dark:text-zinc-400 font-mono">
+                          Driver B Summary
+                        </p>
+                      </div>
                     </div>
                     {(() => {
                       const car = getDriverCarImage(statsB)
