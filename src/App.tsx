@@ -28,6 +28,20 @@ const CURRENT_SEASON = 2025
 const legacyPhotoCache = new Map<string, string>()
 const legacyPhotoInFlight = new Map<string, Promise<string | null>>()
 
+function isPortraitish(meta: any) {
+  const width = meta?.thumbnail?.width ?? meta?.originalimage?.width
+  const height = meta?.thumbnail?.height ?? meta?.originalimage?.height
+  if (!width || !height) return true
+  const ratio = width / height
+  return ratio >= 0.7 && ratio <= 1.35
+}
+
+function descriptionLooksLikeDriver(meta: any) {
+  const desc = (meta?.description || meta?.titles?.normalized || '').toString().toLowerCase()
+  if (!desc) return true
+  return desc.includes('driver') || desc.includes('racing') || desc.includes('motorsport')
+}
+
 async function fetchLegacyDriverPhoto(driver: Driver): Promise<string | null> {
   const cacheKey = driver.driverId || `${driver.givenName}-${driver.familyName}`
   if (legacyPhotoCache.has(cacheKey)) return legacyPhotoCache.get(cacheKey) || null
@@ -49,7 +63,9 @@ async function fetchLegacyDriverPhoto(driver: Driver): Promise<string | null> {
         if (!res.ok) continue
         const data = await res.json()
         if (data?.type === 'disambiguation') continue
-        const thumb = data?.thumbnail?.source
+        if (!descriptionLooksLikeDriver(data)) continue
+        if (!isPortraitish(data)) continue
+        const thumb = data?.originalimage?.source || data?.thumbnail?.source
         if (thumb) {
           legacyPhotoCache.set(cacheKey, thumb)
           return thumb
@@ -115,13 +131,16 @@ function DriverAvatar({ driver, accent, lastSeason }: DriverAvatarProps) {
       ? 'bg-gradient-to-br from-red-500/10 via-red-500/5 to-zinc-200/20 dark:from-red-500/10 dark:via-red-500/5 dark:to-zinc-900/30'
       : 'bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-zinc-200/20 dark:from-blue-500/10 dark:via-blue-500/5 to-zinc-900/30'
 
+  const isWikiPhoto = photoUrl?.includes('upload.wikimedia.org')
+
   return (
     <div className={`relative w-20 h-20 rounded-full border-2 ${borderColor} ${gradient} overflow-hidden flex items-center justify-center`}>
       {!showInitials && photoUrl ? (
         <img
           src={photoUrl}
           alt={`${driver.givenName} ${driver.familyName}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-center"
+          style={{ objectPosition: isWikiPhoto ? '40% center' : 'center' }}
           onError={() => setShowInitials(true)}
         />
       ) : (
@@ -766,10 +785,6 @@ export default function App() {
                           </td>
                         </tr>
                         <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
-                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Championships</td>
-                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{statsA.championships || 0}</td>
-                        </tr>
-                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
                           <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Avg Finish</td>
                           <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">
                             {statsA.avgFinish ? statsA.avgFinish.toFixed(2) : '—'}
@@ -1107,10 +1122,6 @@ export default function App() {
                           <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">
                             {statsB.starts > 0 ? ((statsB.dnfs / statsB.starts) * 100).toFixed(1) : '0.0'}%
                           </td>
-                        </tr>
-                        <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
-                          <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Championships</td>
-                          <td className="px-4 py-2 text-right text-zinc-900 dark:text-zinc-100 font-medium transition-all duration-300">{statsB.championships || 0}</td>
                         </tr>
                         <tr className="hover:bg-zinc-100/40 dark:hover:bg-zinc-900/40 transition-colors duration-200">
                           <td className="px-4 py-2 font-bold text-zinc-700 dark:text-zinc-300">Avg Finish</td>

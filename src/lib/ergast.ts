@@ -13,6 +13,13 @@ export function setLiveMode(enabled: boolean) {
   liveMode = enabled
 }
 
+function applyDriverOverrides(driver: Driver): Driver {
+  if (!driver?.driverId) return driver
+  const overrides = DRIVER_OVERRIDES[driver.driverId]
+  if (!overrides) return driver
+  return { ...driver, ...overrides }
+}
+
 export type Driver = {
   driverId: string
   givenName: string
@@ -34,6 +41,11 @@ const DRIVER_PHOTO_OVERRIDES: Record<string, string> = {
 
   ralf_schumacher: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Ralf_Schumacher_at_2014_DTM_Temperary_Pit.jpg',
   ralfschumacher: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Ralf_Schumacher_at_2014_DTM_Temperary_Pit.jpg'
+}
+
+const DRIVER_OVERRIDES: Record<string, Partial<Driver>> = {
+  norris: { permanentNumber: '1' },
+  lando_norris: { permanentNumber: '1' }
 }
 
 function buildDriverPhotoUrl(slug: string) {
@@ -196,13 +208,13 @@ export async function getAllDrivers(): Promise<Driver[]> {
   const pageLimit = 100
   let offset = 0
   let total = 0
-  const list: Driver[] = []
+  const seen = new Map<string, Driver>()
   do {
     const url = `${API}/drivers.json?limit=${pageLimit}&offset=${offset}`
     const data = await fetchJSON<any>(url)
     const drivers: any[] = (data?.MRData?.DriverTable?.Drivers as any[]) || []
     for (const d of drivers) {
-      list.push({
+      const driver = applyDriverOverrides({
         driverId: d.driverId,
         givenName: d.givenName,
         familyName: d.familyName,
@@ -210,11 +222,15 @@ export async function getAllDrivers(): Promise<Driver[]> {
         permanentNumber: d.permanentNumber,
         nationality: d.nationality,
       })
+      const key = driver.driverId || `${driver.givenName}-${driver.familyName}`.toLowerCase()
+      if (!seen.has(key)) {
+        seen.set(key, driver)
+      }
     }
     total = Number(data?.MRData?.total || drivers.length)
     offset += pageLimit
-  } while (list.length < total)
-  return list.sort((a, b) => a.familyName.localeCompare(b.familyName))
+  } while (seen.size < total)
+  return Array.from(seen.values()).sort((a, b) => a.familyName.localeCompare(b.familyName))
 }
 
 export async function getDriverById(driverId: string): Promise<Driver | null> {
@@ -414,14 +430,14 @@ async function getDriverResults(driverId: string): Promise<RaceResult[]> {
       position: String(r.positionText || r.position),
       status: r.status,
       points: Number(r.points),
-      driver: {
+      driver: applyDriverOverrides({
         driverId: r.Driver.driverId,
         givenName: r.Driver.givenName,
         familyName: r.Driver.familyName,
         code: r.Driver.code,
         permanentNumber: r.Driver.permanentNumber,
         nationality: r.Driver.nationality,
-      },
+      }),
       constructor: r.Constructor ? { constructorId: r.Constructor.constructorId, name: r.Constructor.name } : undefined,
       fastestLapRank: r.FastestLap && r.FastestLap.rank ? Number(r.FastestLap.rank) : null,
     })
