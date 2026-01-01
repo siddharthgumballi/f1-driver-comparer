@@ -471,8 +471,115 @@ export default function App() {
               </div>
               {loadingA ? (
                 <div className="h-64 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative w-32 h-8">
+                      {/* Track */}
+                      <div className="absolute inset-0 bg-zinc-200 dark:bg-zinc-700 rounded-full"></div>
+                      <div className="absolute inset-1 bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
+                      
+                      {/* F1 Car */}
+                      <motion.div
+                        className="absolute top-1/2 -translate-y-1/2 left-0 w-16 h-2.5"
+                        animate={{
+                          x: [0, 64],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}
+                      >
+                        {/* Car body */}
+                        <div className="relative w-full h-full">
+                          {/* Main chassis - extremely low and sleek */}
+                          <div className="absolute inset-0 bg-red-600 rounded-l-full rounded-r-sm transform scale-y-50"></div>
+                          
+                          {/* Nose cone - extremely long and thin */}
+                          <div className="absolute top-1/2 -translate-y-1/2 -left-8 w-9 h-0.5 bg-red-700 rounded-r-full"></div>
+                          
+                          {/* Front wing - very wide and extremely low */}
+                          <div className="absolute -top-0.5 left-0 w-10 h-0.5 bg-red-800 rounded-sm"></div>
+                          <div className="absolute -top-1 left-1 w-8 h-0.5 bg-red-700 rounded-sm"></div>
+                          <div className="absolute -top-1.5 left-2 w-6 h-0.5 bg-red-600 rounded-sm"></div>
+                          <div className="absolute -top-2 left-3 w-4 h-0.5 bg-red-500 rounded-sm"></div>
+                          
+                          {/* Cockpit - extremely low profile */}
+                          <div className="absolute top-0 left-6 w-1.5 h-0.5 bg-zinc-900 rounded-t-sm"></div>
+                          <div className="absolute top-0.5 left-6.5 w-1 h-0.5 bg-zinc-800 rounded-t"></div>
+                          
+                          {/* Halo structure - thin and curved */}
+                          <div className="absolute -top-1.5 left-6 w-2 h-0.5 bg-zinc-700 rounded-sm opacity-80"></div>
+                          <div className="absolute -top-1 left-6 w-1.5 h-0.5 bg-zinc-600 rounded-sm opacity-60"></div>
+                          
+                          {/* Side pods - very sleek and integrated */}
+                          <div className="absolute top-0.5 left-4 w-10 h-1 bg-red-500 rounded-sm opacity-90"></div>
+                          <div className="absolute top-1 left-4.5 w-9 h-0.5 bg-red-400 rounded-sm opacity-70"></div>
+                          
+                          {/* Engine cover - very tapered */}
+                          <div className="absolute top-0.5 right-3 w-5 h-1 bg-red-600 rounded-r-sm"></div>
+                          
+                          {/* Rear wing - very tall and complex */}
+                          <div className="absolute -top-2.5 right-0 w-0.5 h-6 bg-red-800 rounded-sm"></div>
+                          <div className="absolute -top-2 right-0.5 w-4 h-0.5 bg-red-700 rounded-sm"></div>
+                          <div className="absolute -top-3 right-0.5 w-3.5 h-0.5 bg-red-600 rounded-sm"></div>
+                          <div className="absolute -top-3.5 right-1 w-3 h-0.5 bg-red-500 rounded-sm"></div>
+                          <div className="absolute top-2 right-0 w-0.5 h-2.5 bg-red-800 rounded-sm"></div>
+                          <div className="absolute top-2.5 right-0.5 w-4 h-0.5 bg-red-700 rounded-sm"></div>
+                          <div className="absolute top-3 right-0.5 w-3.5 h-0.5 bg-red-600 rounded-sm"></div>
+                          <div className="absolute top-3.5 right-1 w-3 h-0.5 bg-red-500 rounded-sm"></div>
+                          
+                          {/* Barge boards - very thin vertical fins */}
+                          <div className="absolute top-0.5 left-5 w-0.5 h-0.5 bg-red-500 rounded-sm opacity-80"></div>
+                          <div className="absolute top-0.5 right-5 w-0.5 h-0.5 bg-red-500 rounded-sm opacity-80"></div>
+                          
+                          {/* Suspension elements - very thin */}
+                          <div className="absolute top-0.5 left-3 w-0.5 h-0.5 bg-zinc-600 rounded-sm opacity-70"></div>
+                          <div className="absolute top-0.5 right-3 w-0.5 h-0.5 bg-zinc-600 rounded-sm opacity-70"></div>
+                          
+                          {/* Wheels - very large F1 slick tires */}
+                          <div className="absolute bottom-0 left-1 w-3 h-3 bg-zinc-900 rounded-full"></div>
+                          <div className="absolute bottom-0 right-1 w-3 h-3 bg-zinc-900 rounded-full"></div>
+                          <div className="absolute bottom-0 left-1.5 w-2 h-2 bg-zinc-700 rounded-full"></div>
+                          <div className="absolute bottom-0 right-1.5 w-2 h-2 bg-zinc-700 rounded-full"></div>
+                          
+                          {/* Tire details - modern slick surface */}
+                          <div className="absolute bottom-0.5 left-2 w-1 h-1 bg-zinc-800 rounded-sm opacity-20"></div>
+                          <div className="absolute bottom-0.5 right-2 w-1 h-1 bg-zinc-800 rounded-sm opacity-20"></div>
+                          
+                          {/* Front wing supports - very thin */}
+                          <div className="absolute top-0 left-2 w-0.5 h-0.5 bg-red-600 rounded-sm opacity-60"></div>
+                          <div className="absolute top-0 right-2 w-0.5 h-0.5 bg-red-600 rounded-sm opacity-60"></div>
+                          
+                          {/* Air intake - small detail */}
+                          <div className="absolute top-0 right-4 w-1 h-0.5 bg-red-400 rounded-sm opacity-70"></div>
+                          
+                          {/* Camera housing - tiny detail */}
+                          <div className="absolute top-0 left-7 w-0.5 h-0.5 bg-zinc-500 rounded-full"></div>
+                        </div>
+                        
+                        {/* Motion blur trail */}
+                        <motion.div
+                          className="absolute top-1/2 -translate-y-1/2 -left-12 w-16 h-2.5 opacity-15"
+                          animate={{
+                            opacity: [0, 0.15, 0],
+                            width: [16, 32, 16]
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "linear"
+                          }}
+                        >
+                          <div className="w-full h-full bg-red-400 rounded-l-full rounded-r-sm transform scale-y-50 opacity-50"></div>
+                        </motion.div>
+                      </motion.div>
+                      
+                      {/* Track markings */}
+                      <div className="absolute top-1/2 -translate-y-1/2 left-4 w-1 h-1 bg-zinc-400 rounded-full opacity-50"></div>
+                      <div className="absolute top-1/2 -translate-y-1/2 left-12 w-1 h-1 bg-zinc-400 rounded-full opacity-50"></div>
+                      <div className="absolute top-1/2 -translate-y-1/2 left-20 w-1 h-1 bg-zinc-400 rounded-full opacity-50"></div>
+                      <div className="absolute top-1/2 -translate-y-1/2 left-28 w-1 h-1 bg-zinc-400 rounded-full opacity-50"></div>
+                    </div>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading driver data...</p>
                   </div>
                 </div>
@@ -700,8 +807,115 @@ export default function App() {
               </div>
               {loadingB ? (
                 <div className="h-64 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative w-32 h-8">
+                      {/* Track */}
+                      <div className="absolute inset-0 bg-zinc-200 dark:bg-zinc-700 rounded-full"></div>
+                      <div className="absolute inset-1 bg-zinc-100 dark:bg-zinc-800 rounded-full"></div>
+                      
+                      {/* F1 Car */}
+                      <motion.div
+                        className="absolute top-1/2 -translate-y-1/2 left-0 w-16 h-2.5"
+                        animate={{
+                          x: [0, 64],
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}
+                      >
+                        {/* Car body */}
+                        <div className="relative w-full h-full">
+                          {/* Main chassis - extremely low and sleek */}
+                          <div className="absolute inset-0 bg-blue-600 rounded-l-full rounded-r-sm transform scale-y-50"></div>
+                          
+                          {/* Nose cone - extremely long and thin */}
+                          <div className="absolute top-1/2 -translate-y-1/2 -left-8 w-9 h-0.5 bg-blue-700 rounded-r-full"></div>
+                          
+                          {/* Front wing - very wide and extremely low */}
+                          <div className="absolute -top-0.5 left-0 w-10 h-0.5 bg-blue-800 rounded-sm"></div>
+                          <div className="absolute -top-1 left-1 w-8 h-0.5 bg-blue-700 rounded-sm"></div>
+                          <div className="absolute -top-1.5 left-2 w-6 h-0.5 bg-blue-600 rounded-sm"></div>
+                          <div className="absolute -top-2 left-3 w-4 h-0.5 bg-blue-500 rounded-sm"></div>
+                          
+                          {/* Cockpit - extremely low profile */}
+                          <div className="absolute top-0 left-6 w-1.5 h-0.5 bg-zinc-900 rounded-t-sm"></div>
+                          <div className="absolute top-0.5 left-6.5 w-1 h-0.5 bg-zinc-800 rounded-t"></div>
+                          
+                          {/* Halo structure - thin and curved */}
+                          <div className="absolute -top-1.5 left-6 w-2 h-0.5 bg-zinc-700 rounded-sm opacity-80"></div>
+                          <div className="absolute -top-1 left-6 w-1.5 h-0.5 bg-zinc-600 rounded-sm opacity-60"></div>
+                          
+                          {/* Side pods - very sleek and integrated */}
+                          <div className="absolute top-0.5 left-4 w-10 h-1 bg-blue-500 rounded-sm opacity-90"></div>
+                          <div className="absolute top-1 left-4.5 w-9 h-0.5 bg-blue-400 rounded-sm opacity-70"></div>
+                          
+                          {/* Engine cover - very tapered */}
+                          <div className="absolute top-0.5 right-3 w-5 h-1 bg-blue-600 rounded-r-sm"></div>
+                          
+                          {/* Rear wing - very tall and complex */}
+                          <div className="absolute -top-2.5 right-0 w-0.5 h-6 bg-blue-800 rounded-sm"></div>
+                          <div className="absolute -top-2 right-0.5 w-4 h-0.5 bg-blue-700 rounded-sm"></div>
+                          <div className="absolute -top-3 right-0.5 w-3.5 h-0.5 bg-blue-600 rounded-sm"></div>
+                          <div className="absolute -top-3.5 right-1 w-3 h-0.5 bg-blue-500 rounded-sm"></div>
+                          <div className="absolute top-2 right-0 w-0.5 h-2.5 bg-blue-800 rounded-sm"></div>
+                          <div className="absolute top-2.5 right-0.5 w-4 h-0.5 bg-blue-700 rounded-sm"></div>
+                          <div className="absolute top-3 right-0.5 w-3.5 h-0.5 bg-blue-600 rounded-sm"></div>
+                          <div className="absolute top-3.5 right-1 w-3 h-0.5 bg-blue-500 rounded-sm"></div>
+                          
+                          {/* Barge boards - very thin vertical fins */}
+                          <div className="absolute top-0.5 left-5 w-0.5 h-0.5 bg-blue-500 rounded-sm opacity-80"></div>
+                          <div className="absolute top-0.5 right-5 w-0.5 h-0.5 bg-blue-500 rounded-sm opacity-80"></div>
+                          
+                          {/* Suspension elements - very thin */}
+                          <div className="absolute top-0.5 left-3 w-0.5 h-0.5 bg-zinc-600 rounded-sm opacity-70"></div>
+                          <div className="absolute top-0.5 right-3 w-0.5 h-0.5 bg-zinc-600 rounded-sm opacity-70"></div>
+                          
+                          {/* Wheels - very large F1 slick tires */}
+                          <div className="absolute bottom-0 left-1 w-3 h-3 bg-zinc-900 rounded-full"></div>
+                          <div className="absolute bottom-0 right-1 w-3 h-3 bg-zinc-900 rounded-full"></div>
+                          <div className="absolute bottom-0 left-1.5 w-2 h-2 bg-zinc-700 rounded-full"></div>
+                          <div className="absolute bottom-0 right-1.5 w-2 h-2 bg-zinc-700 rounded-full"></div>
+                          
+                          {/* Tire details - modern slick surface */}
+                          <div className="absolute bottom-0.5 left-2 w-1 h-1 bg-zinc-800 rounded-sm opacity-20"></div>
+                          <div className="absolute bottom-0.5 right-2 w-1 h-1 bg-zinc-800 rounded-sm opacity-20"></div>
+                          
+                          {/* Front wing supports - very thin */}
+                          <div className="absolute top-0 left-2 w-0.5 h-0.5 bg-blue-600 rounded-sm opacity-60"></div>
+                          <div className="absolute top-0 right-2 w-0.5 h-0.5 bg-blue-600 rounded-sm opacity-60"></div>
+                          
+                          {/* Air intake - small detail */}
+                          <div className="absolute top-0 right-4 w-1 h-0.5 bg-blue-400 rounded-sm opacity-70"></div>
+                          
+                          {/* Camera housing - tiny detail */}
+                          <div className="absolute top-0 left-7 w-0.5 h-0.5 bg-zinc-500 rounded-full"></div>
+                        </div>
+                        
+                        {/* Motion blur trail */}
+                        <motion.div
+                          className="absolute top-1/2 -translate-y-1/2 -left-12 w-16 h-2.5 opacity-15"
+                          animate={{
+                            opacity: [0, 0.15, 0],
+                            width: [16, 32, 16]
+                          }}
+                          transition={{
+                            duration: 2,
+                            repeat: Infinity,
+                            ease: "linear"
+                          }}
+                        >
+                          <div className="w-full h-full bg-blue-400 rounded-l-full rounded-r-sm transform scale-y-50 opacity-50"></div>
+                        </motion.div>
+                      </motion.div>
+                      
+                      {/* Track markings */}
+                      <div className="absolute top-1/2 -translate-y-1/2 left-4 w-1 h-1 bg-zinc-400 rounded-full opacity-50"></div>
+                      <div className="absolute top-1/2 -translate-y-1/2 left-12 w-1 h-1 bg-zinc-400 rounded-full opacity-50"></div>
+                      <div className="absolute top-1/2 -translate-y-1/2 left-20 w-1 h-1 bg-zinc-400 rounded-full opacity-50"></div>
+                      <div className="absolute top-1/2 -translate-y-1/2 left-28 w-1 h-1 bg-zinc-400 rounded-full opacity-50"></div>
+                    </div>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">Loading driver data...</p>
                   </div>
                 </div>
