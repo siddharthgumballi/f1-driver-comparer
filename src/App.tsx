@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import DriverSelect from './components/DriverSelect'
 import { getDriverStats, getHeadToHead, setLiveMode, getDriverPhotoUrl } from './lib/ergast'
@@ -24,6 +24,114 @@ const CONSTRUCTOR_CARS: Record<string, string> = {
 }
 
 const CURRENT_SEASON = 2025
+
+const legacyPhotoCache = new Map<string, string>()
+const legacyPhotoInFlight = new Map<string, Promise<string | null>>()
+
+async function fetchLegacyDriverPhoto(driver: Driver): Promise<string | null> {
+  const cacheKey = driver.driverId || `${driver.givenName}-${driver.familyName}`
+  if (legacyPhotoCache.has(cacheKey)) return legacyPhotoCache.get(cacheKey) || null
+  if (legacyPhotoInFlight.has(cacheKey)) return legacyPhotoInFlight.get(cacheKey)!
+
+  const attempt = async () => {
+    const baseName = `${driver.givenName} ${driver.familyName}`.trim()
+    const candidates = [
+      `${baseName} (racing driver)`,
+      `${baseName} (Formula One)`,
+      baseName,
+      driver.familyName,
+    ].filter(Boolean) as string[]
+
+    for (const title of candidates) {
+      try {
+        const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`
+        const res = await fetch(url)
+        if (!res.ok) continue
+        const data = await res.json()
+        if (data?.type === 'disambiguation') continue
+        const thumb = data?.thumbnail?.source
+        if (thumb) {
+          legacyPhotoCache.set(cacheKey, thumb)
+          return thumb
+        }
+      } catch {
+        continue
+      }
+    }
+    legacyPhotoCache.set(cacheKey, '')
+    return null
+  }
+
+  const promise = attempt().finally(() => legacyPhotoInFlight.delete(cacheKey))
+  legacyPhotoInFlight.set(cacheKey, promise)
+  return promise
+}
+
+type DriverAvatarProps = {
+  driver: Driver
+  accent: 'red' | 'blue'
+  lastSeason?: number | null
+}
+
+function DriverAvatar({ driver, accent, lastSeason }: DriverAvatarProps) {
+  const preferLegacy = (lastSeason ?? CURRENT_SEASON) < CURRENT_SEASON - 2
+  const [photoUrl, setPhotoUrl] = useState<string | null>(() => (preferLegacy ? null : getDriverPhotoUrl(driver)))
+  const [showInitials, setShowInitials] = useState(false)
+  const isMounted = useRef(true)
+
+  useEffect(() => {
+    isMounted.current = true
+    return () => {
+      isMounted.current = false
+    }
+  }, [])
+
+  useEffect(() => {
+    setShowInitials(false)
+    if (!preferLegacy) {
+      setPhotoUrl(getDriverPhotoUrl(driver))
+      return
+    }
+
+    let cancelled = false
+    fetchLegacyDriverPhoto(driver)
+      .then(url => {
+        if (cancelled || !isMounted.current) return
+        if (url) setPhotoUrl(url)
+        else setShowInitials(true)
+      })
+      .catch(() => {
+        if (!cancelled && isMounted.current) setShowInitials(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [driver.driverId, driver.givenName, driver.familyName, preferLegacy])
+
+  const initials = `${driver.givenName?.[0] ?? ''}${driver.familyName?.[0] ?? ''}`.trim().toUpperCase() || '??'
+  const borderColor = accent === 'red' ? 'border-red-500/20' : 'border-blue-500/20'
+  const gradient =
+    accent === 'red'
+      ? 'bg-gradient-to-br from-red-500/10 via-red-500/5 to-zinc-200/20 dark:from-red-500/10 dark:via-red-500/5 dark:to-zinc-900/30'
+      : 'bg-gradient-to-br from-blue-500/10 via-blue-500/5 to-zinc-200/20 dark:from-blue-500/10 dark:via-blue-500/5 to-zinc-900/30'
+
+  return (
+    <div className={`relative w-20 h-20 rounded-full border-2 ${borderColor} ${gradient} overflow-hidden flex items-center justify-center`}>
+      {!showInitials && photoUrl ? (
+        <img
+          src={photoUrl}
+          alt={`${driver.givenName} ${driver.familyName}`}
+          className="w-full h-full object-cover"
+          onError={() => setShowInitials(true)}
+        />
+      ) : (
+        <span className="text-lg font-black tracking-widest text-zinc-600 dark:text-zinc-200">
+          {initials}
+        </span>
+      )}
+    </div>
+  )
+}
 
 function constructorSlugFromName(name: string) {
   const n = name.trim().toLowerCase()
@@ -592,11 +700,10 @@ export default function App() {
                 >
                   <div className="relative mb-6 flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <img 
-                        src={getDriverPhotoUrl(statsA.driver)} 
-                        alt={`${statsA.driver.givenName} ${statsA.driver.familyName}`}
-                        className="w-20 h-20 rounded-full object-cover border-2 border-red-500/20"
-                        onError={(e) => {(e.target as HTMLImageElement).style.display = 'none'}}
+                      <DriverAvatar
+                        driver={statsA.driver}
+                        accent="red"
+                        lastSeason={statsA.activeYears?.to ?? (statsA.seasons?.slice(-1)[0]?.season ?? null)}
                       />
                       <div>
                         <h2 className="text-3xl font-bold leading-none tracking-tight font-[system-ui]">
@@ -936,11 +1043,10 @@ export default function App() {
                 >
                   <div className="relative mb-6 flex items-start justify-between gap-4">
                     <div className="flex items-center gap-4">
-                      <img 
-                        src={getDriverPhotoUrl(statsB.driver)} 
-                        alt={`${statsB.driver.givenName} ${statsB.driver.familyName}`}
-                        className="w-20 h-20 rounded-full object-cover border-2 border-blue-500/20"
-                        onError={(e) => {(e.target as HTMLImageElement).style.display = 'none'}}
+                      <DriverAvatar
+                        driver={statsB.driver}
+                        accent="blue"
+                        lastSeason={statsB.activeYears?.to ?? (statsB.seasons?.slice(-1)[0]?.season ?? null)}
                       />
                       <div>
                         <h2 className="text-3xl font-bold leading-none tracking-tight font-[system-ui]">

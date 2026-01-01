@@ -24,10 +24,43 @@ export type Driver = {
 
 const CURRENT_SEASON = 2025
 
+const DRIVER_PHOTO_OVERRIDES: Record<string, string> = {
+  jos_verstappen: 'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',
+  josverstappen: 'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',
+
+  schumacher: 'https://upload.wikimedia.org/wikipedia/commons/0/06/Michael_Schumacher_2010_Malaysia_3rd_Free_Practice.jpg',
+  michael_schumacher: 'https://upload.wikimedia.org/wikipedia/commons/0/06/Michael_Schumacher_2010_Malaysia_3rd_Free_Practice.jpg',
+  michaelschumacher: 'https://upload.wikimedia.org/wikipedia/commons/0/06/Michael_Schumacher_2010_Malaysia_3rd_Free_Practice.jpg',
+
+  ralf_schumacher: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Ralf_Schumacher_at_2014_DTM_Temperary_Pit.jpg',
+  ralfschumacher: 'https://upload.wikimedia.org/wikipedia/commons/d/d6/Ralf_Schumacher_at_2014_DTM_Temperary_Pit.jpg'
+}
+
+function buildDriverPhotoUrl(slug: string) {
+  return `https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/${CURRENT_SEASON}Drivers/${slug}.png`
+}
+
+function lookupOverride(driver: Driver) {
+  const variants = [
+    driver.driverId?.toLowerCase(),
+    `${driver.givenName}_${driver.familyName}`.toLowerCase(),
+    `${driver.givenName}${driver.familyName}`.toLowerCase().replace(/[^a-z]/g, ''),
+  ].filter(Boolean) as string[]
+
+  for (const key of variants) {
+    const hit = DRIVER_PHOTO_OVERRIDES[key]
+    if (hit) return hit
+  }
+  return undefined
+}
+
 export function getDriverPhotoUrl(driver: Driver): string {
+  const override = lookupOverride(driver)
+  if (override) return override
+
   // Use family name as slug, remove non-alphabetic chars for URL safety
   const slug = driver.familyName.toLowerCase().replace(/[^a-z]/g, '')
-  return `https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/${CURRENT_SEASON}Drivers/${slug}.png`
+  return buildDriverPhotoUrl(slug)
 }
 
 export type SeasonStat = {
