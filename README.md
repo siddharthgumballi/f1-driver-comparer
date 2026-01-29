@@ -13,6 +13,8 @@ A modern web application for comparing Formula 1 drivers' statistics and head-to
 - **Stint-Specific Statistics**: Each constructor stint shows only the stats from that specific time period
 - **Responsive Driver Stats Table**: Clean, organized table format for driver statistics
 - **Dark/Light Theme Support**: Toggle between dark and light modes
+- **Dynamic Driver Portraits**: Automatically fetches high-res photos from the F1 CDN or Wikipedia (with smart fallbacks) so even legacy drivers look authentic
+- **Team-Branded Loading Animation**: Custom Framer Motion F1 car animation replaces generic spinners to keep the app on-theme while data loads
 - Visual progress bars for easy comparison
 - Responsive design that works on all devices
 - Fast and efficient data loading with caching
@@ -49,6 +51,12 @@ A modern web application for comparing Formula 1 drivers' statistics and head-to
 - **Table-Based Driver Stats**: Replaced grid layout with clean, organized table format
 - **Enhanced Visual Design**: Improved borders, backgrounds, and spacing
 - **Better Color Scheme**: Consistent color usage in both light and dark modes
+
+### Driver Imagery Pipeline
+- **Legacy Portrait Fetcher**: Wikipedia-based fallback (with portrait + description heuristics) fills in photos for historic drivers when F1’s CDN has gaps
+- **Per-Driver Overrides**: Manual URL overrides for notable alumni (Schumacher, Vettel, Ricciardo, etc.) to guarantee high-quality imagery
+- **Dynamic Number Overrides**: Champions like Lando Norris automatically inherit the correct #1 plate across the UI
+- **Initials Fallback**: When no safe photo exists, stylized initials keep the layout balanced while signalling missing art
 
 ## 🚀 Quick Start
 

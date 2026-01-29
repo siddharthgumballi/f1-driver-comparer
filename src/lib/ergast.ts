@@ -35,6 +35,14 @@ const DRIVER_PHOTO_OVERRIDES: Record<string, string> = {
   jos_verstappen: 'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',
   josverstappen: 'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',
 
+  vettel: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Sebastian_Vettel_2017_Malaysia_2.jpg',
+  sebastian_vettel: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Sebastian_Vettel_2017_Malaysia_2.jpg',
+  sebastianvettel: 'https://upload.wikimedia.org/wikipedia/commons/8/8b/Sebastian_Vettel_2017_Malaysia_2.jpg',
+
+  ricciardo: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Daniel_Ricciardo_2017_Malaysia_3.jpg',
+  daniel_ricciardo: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Daniel_Ricciardo_2017_Malaysia_3.jpg',
+  danielricciardo: 'https://upload.wikimedia.org/wikipedia/commons/6/6d/Daniel_Ricciardo_2017_Malaysia_3.jpg',
+
   schumacher: 'https://upload.wikimedia.org/wikipedia/commons/0/06/Michael_Schumacher_2010_Malaysia_3rd_Free_Practice.jpg',
   michael_schumacher: 'https://upload.wikimedia.org/wikipedia/commons/0/06/Michael_Schumacher_2010_Malaysia_3rd_Free_Practice.jpg',
   michaelschumacher: 'https://upload.wikimedia.org/wikipedia/commons/0/06/Michael_Schumacher_2010_Malaysia_3rd_Free_Practice.jpg',
@@ -121,6 +129,7 @@ export type DriverStats = {
 type RaceResult = {
   season: string
   round: number
+  raceName?: string
   grid: number
   position: string
   status: string
@@ -426,6 +435,7 @@ async function getDriverResults(driverId: string): Promise<RaceResult[]> {
     results.push({
       season: race.season,
       round: Number(race.round),
+      raceName: race.raceName,
       grid: Number(r.grid),
       position: String(r.positionText || r.position),
       status: r.status,
@@ -516,6 +526,33 @@ export type HeadToHead = {
     finishedAhead: number;
   }
   bothFinished: number;
+}
+
+// Export race results for race-by-race breakdown
+export async function getDriverRaceResults(driverId: string): Promise<RaceResult[]> {
+  return getDriverResults(driverId)
+}
+
+// Get championship winning years for a driver
+export async function getChampionshipYears(driverId: string): Promise<number[]> {
+  const results = await getDriverResults(driverId)
+  const seasons = Array.from(new Set(results.map(r => parseInt(r.season, 10)))).sort((a,b)=>a-b)
+  const years: number[] = []
+
+  for (const season of seasons) {
+    try {
+      const url = `${API}/${season}/driverStandings.json?limit=1000`
+      const data = await fetchJSON<any>(url)
+      const lists: any[] = data?.MRData?.StandingsTable?.StandingsLists || []
+      const first = lists[0]?.DriverStandings?.[0]
+      if (first && String(first.position) === '1' && first.Driver?.driverId === driverId) {
+        years.push(season)
+      }
+    } catch {
+      // ignore and continue
+    }
+  }
+  return years
 }
 
 export async function getHeadToHead(aId: string, bId: string): Promise<HeadToHead> {

@@ -9,6 +9,8 @@
 # Production
 /build
 /dist
+.vite/
+.vercel/
 
 # Environment files
 .env
