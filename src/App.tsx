@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import DriverSelect from './components/DriverSelect'
 import { getDriverStats, getHeadToHead, setLiveMode, getDriverRaceResults, getChampionshipYears } from './lib/ergast'
@@ -8,7 +8,7 @@ import type { Driver, DriverStats, HeadToHead as HeadToHeadType, RaceResult } fr
 // Components
 import { Header } from './components/layout/Header'
 import { EmptyState } from './components/layout/EmptyState'
-import { GlassCard } from './components/ui/GlassCard'
+import { GlassCard, ShareButton, HistoryPanel, PrintButton, KeyboardShortcutsHelp } from './components/ui'
 import { F1CarLoader } from './components/ui/F1CarLoader'
 import { DriverCard, SeasonBreakdown } from './components/driver'
 import { HeadToHead, ConstructorHistory } from './components/comparison'
@@ -19,6 +19,8 @@ import { ChampionshipTimeline } from './components/comparison/ChampionshipTimeli
 // Hooks
 import { useDarkMode } from './hooks/useDarkMode'
 import { useUrlState } from './hooks/useUrlState'
+import { useComparisonHistory } from './hooks/useComparisonHistory'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 
 export default function App() {
   const [driverA, setDriverA] = useState<Driver | null>(null)
@@ -35,7 +37,21 @@ export default function App() {
   const [champYearsA, setChampYearsA] = useState<number[]>([])
   const [champYearsB, setChampYearsB] = useState<number[]>([])
 
-  const { darkMode, setDarkMode } = useDarkMode()
+  const { darkMode, setDarkMode, toggleDarkMode } = useDarkMode()
+  const {
+    recentComparisons,
+    favorites,
+    addToHistory,
+    addToFavorites,
+    removeFromFavorites,
+    clearHistory,
+    isFavorite,
+  } = useComparisonHistory()
+
+  // Refs for keyboard shortcuts
+  const driverASelectRef = useRef<HTMLDivElement>(null)
+  const driverBSelectRef = useRef<HTMLDivElement>(null)
+  const h2hSectionRef = useRef<HTMLDivElement>(null)
 
   const fetchDriver = useCallback(async (driverId: string, side: 'a' | 'b') => {
     const setLoading = side === 'a' ? setLoadingA : setLoadingB
@@ -106,10 +122,38 @@ export default function App() {
     setLiveMode(live)
   }, [live])
 
+  // Add to history when both drivers are selected
+  useEffect(() => {
+    if (driverA && driverB) {
+      addToHistory(driverA, driverB)
+    }
+  }, [driverA?.driverId, driverB?.driverId, addToHistory])
+
   const handleSelectComparison = (a: Driver, b: Driver) => {
     setDriverA(a)
     setDriverB(b)
   }
+
+  const handlePrint = useCallback(() => {
+    window.print()
+  }, [])
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onFocusDriverA: () => {
+      const button = driverASelectRef.current?.querySelector('button')
+      button?.click()
+    },
+    onFocusDriverB: () => {
+      const button = driverBSelectRef.current?.querySelector('button')
+      button?.click()
+    },
+    onToggleDarkMode: toggleDarkMode,
+    onToggleLiveMode: () => setLive((prev) => !prev),
+    onPrint: handlePrint,
+    onScrollToTop: () => window.scrollTo({ top: 0, behavior: 'smooth' }),
+    onScrollToH2H: () => h2hSectionRef.current?.scrollIntoView({ behavior: 'smooth' }),
+  })
 
   const bothSelected = driverA && driverB
   const hasStats = statsA || statsB
@@ -118,7 +162,7 @@ export default function App() {
   return (
     <div className="relative min-h-screen bg-white dark:bg-f1-black text-zinc-900 dark:text-f1-white p-4 md:p-8 overflow-hidden">
       {/* F1 Track Background */}
-      <div className="absolute inset-0 -z-10 opacity-[0.04] dark:opacity-[0.03]">
+      <div className="absolute inset-0 -z-10 opacity-[0.04] dark:opacity-[0.03] no-print">
         <div className="absolute inset-0 bg-[url('https://www.formula1.com/etc/designs/fom-website/images/patterns/01-f1-circuit.svg')] bg-cover bg-center" />
         <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-transparent to-white/90 dark:from-f1-black/90 dark:to-f1-black/90" />
       </div>
@@ -136,14 +180,68 @@ export default function App() {
           onDarkModeChange={setDarkMode}
         />
 
+        {/* Toolbar */}
+        <div className="flex flex-wrap items-center justify-end gap-2 mb-4 no-print relative z-[200]">
+          <HistoryPanel
+            recentComparisons={recentComparisons}
+            favorites={favorites}
+            onSelectComparison={handleSelectComparison}
+            onAddToFavorites={addToFavorites}
+            onRemoveFromFavorites={removeFromFavorites}
+            onClearHistory={clearHistory}
+            isFavorite={isFavorite}
+          />
+          <ShareButton driverA={driverA} driverB={driverB} />
+          <PrintButton onPrint={handlePrint} />
+          <KeyboardShortcutsHelp />
+
+          {/* Favorite current comparison button */}
+          {bothSelected && (
+            <motion.button
+              onClick={() =>
+                isFavorite(driverA, driverB)
+                  ? removeFromFavorites(`${[driverA.driverId, driverB.driverId].sort().join('-')}`)
+                  : addToFavorites(driverA, driverB)
+              }
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-colors text-sm font-medium ${
+                isFavorite(driverA, driverB)
+                  ? 'bg-accent-gold/20 border-accent-gold text-accent-gold'
+                  : 'bg-f1-carbon border-f1-steel hover:border-accent-gold text-f1-white'
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              aria-label={isFavorite(driverA, driverB) ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <svg
+                className="w-4 h-4"
+                fill={isFavorite(driverA, driverB) ? 'currentColor' : 'none'}
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                />
+              </svg>
+              {isFavorite(driverA, driverB) ? 'Favorited' : 'Favorite'}
+            </motion.button>
+          )}
+        </div>
+
         {/* Driver Selectors */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 relative z-50">
-          <GlassCard variant="red" className="p-6 relative z-50">
-            <DriverSelect label="Driver A" value={driverA} onChange={setDriverA} disabled={loadingA} />
-          </GlassCard>
-          <GlassCard variant="cyan" className="p-6 relative z-50">
-            <DriverSelect label="Driver B" value={driverB} onChange={setDriverB} disabled={loadingB} />
-          </GlassCard>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 relative z-[100] no-print">
+          <div ref={driverASelectRef}>
+            <GlassCard variant="red" className="p-6 relative z-[100]">
+              <DriverSelect label="Driver A" value={driverA} onChange={setDriverA} disabled={loadingA} />
+            </GlassCard>
+          </div>
+          <div ref={driverBSelectRef}>
+            <GlassCard variant="cyan" className="p-6 relative z-[100]">
+              <DriverSelect label="Driver B" value={driverB} onChange={setDriverB} disabled={loadingB} />
+            </GlassCard>
+          </div>
         </div>
 
         {/* Empty State */}
@@ -151,18 +249,18 @@ export default function App() {
 
         {/* Loading State */}
         {(loadingA || loadingB) && !hasStats && (
-          <div className="flex justify-center py-16">
+          <div className="flex justify-center py-16 no-print">
             <F1CarLoader variant={loadingA ? 'red' : 'cyan'} message="Loading driver data..." />
           </div>
         )}
 
         {/* Driver Cards */}
         {hasStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-10">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-0 print-card">
             {/* Driver A Column */}
             <div className="space-y-4">
               {loadingA ? (
-                <div className="h-64 flex items-center justify-center">
+                <div className="h-64 flex items-center justify-center no-print">
                   <F1CarLoader variant="red" />
                 </div>
               ) : statsA ? (
@@ -176,7 +274,7 @@ export default function App() {
             {/* Driver B Column */}
             <div className="space-y-4">
               {loadingB ? (
-                <div className="h-64 flex items-center justify-center">
+                <div className="h-64 flex items-center justify-center no-print">
                   <F1CarLoader variant="cyan" />
                 </div>
               ) : statsB ? (
@@ -191,14 +289,14 @@ export default function App() {
 
         {/* Head to Head */}
         {bothSelected && h2h && h2h.racesTogether > 0 && (
-          <div className="mt-8">
+          <div className="mt-8 print-card" ref={h2hSectionRef} id="head-to-head">
             <HeadToHead h2h={h2h} driverA={driverA} driverB={driverB} />
           </div>
         )}
 
         {/* Career Progression Chart */}
         {statsA && statsB && (
-          <div className="mt-8">
+          <div className="mt-8 print-card">
             <CareerProgressionChart
               statsA={statsA}
               statsB={statsB}
@@ -210,7 +308,7 @@ export default function App() {
 
         {/* Championship Timeline */}
         {statsA && statsB && (champYearsA.length > 0 || champYearsB.length > 0) && (
-          <div className="mt-8">
+          <div className="mt-8 print-card">
             <ChampionshipTimeline
               statsA={statsA}
               statsB={statsB}
@@ -224,7 +322,7 @@ export default function App() {
 
         {/* Race by Race Breakdown */}
         {racesA.length > 0 && racesB.length > 0 && driverA && driverB && (
-          <div className="mt-8">
+          <div className="mt-8 print-card">
             <RaceByRaceBreakdown
               racesA={racesA}
               racesB={racesB}
@@ -236,7 +334,7 @@ export default function App() {
 
         {/* Constructor History */}
         {statsA && statsB && (
-          <div className="mt-8">
+          <div className="mt-8 print-card">
             <ConstructorHistory
               statsA={statsA}
               statsB={statsB}
@@ -251,7 +349,7 @@ export default function App() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-8 p-4 rounded-xl bg-f1-red/10 border border-f1-red/30 text-center"
+            className="mt-8 p-4 rounded-xl bg-f1-red/10 border border-f1-red/30 text-center no-print"
           >
             <p className="text-f1-red font-medium">{error}</p>
             <button
@@ -266,6 +364,12 @@ export default function App() {
             </button>
           </motion.div>
         )}
+
+        {/* Print Footer */}
+        <div className="hidden print:block mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-500">
+          <p>F1 Driver Comparer - Generated on {new Date().toLocaleDateString()}</p>
+          <p className="text-xs mt-1">Data sourced from Ergast F1 API</p>
+        </div>
       </motion.div>
     </div>
   )

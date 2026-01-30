@@ -3,6 +3,8 @@ import type { HeadToHead as HeadToHeadType, Driver } from '../../types'
 import { GlassCard } from '../ui/GlassCard'
 import { StatBar } from '../ui/StatBar'
 import { Tooltip } from '../ui/Tooltip'
+import { AnimatedCounter } from '../ui/AnimatedCounter'
+import { NationalityFlag } from '../ui/NationalityFlag'
 
 type HeadToHeadProps = {
   h2h: HeadToHeadType
@@ -74,14 +76,28 @@ export function HeadToHead({ h2h, driverA, driverB }: HeadToHeadProps) {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mt-6">
           {/* Driver A Stats */}
           <div className="space-y-2">
-            <div className="text-center font-medium text-f1-red text-xs sm:text-sm">
+            <div className="text-center font-medium text-f1-red text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <NationalityFlag nationality={driverA.nationality} size="sm" />
               {driverAName}
             </div>
-            <StatCard value={h2h.a.wins} label="Wins" />
-            <StatCard value={h2h.a.points} label="Points" />
             <StatCard
-              value={h2h.a.avgFinish ? h2h.a.avgFinish.toFixed(1) : '—'}
+              value={h2h.a.wins}
+              label="Wins"
+              comparisonValue={h2h.b.wins}
+              betterIs="higher"
+            />
+            <StatCard
+              value={h2h.a.points}
+              label="Points"
+              comparisonValue={h2h.b.points}
+              betterIs="higher"
+            />
+            <StatCard
+              value={h2h.a.avgFinish}
               label="Avg. Finish"
+              comparisonValue={h2h.b.avgFinish}
+              betterIs="lower"
+              decimals={1}
             />
           </div>
 
@@ -98,14 +114,28 @@ export function HeadToHead({ h2h, driverA, driverB }: HeadToHeadProps) {
 
           {/* Driver B Stats */}
           <div className="space-y-2">
-            <div className="text-center font-medium text-accent-cyan text-xs sm:text-sm">
+            <div className="text-center font-medium text-accent-cyan text-xs sm:text-sm flex items-center justify-center gap-1.5">
+              <NationalityFlag nationality={driverB.nationality} size="sm" />
               {driverBName}
             </div>
-            <StatCard value={h2h.b.wins} label="Wins" />
-            <StatCard value={h2h.b.points} label="Points" />
             <StatCard
-              value={h2h.b.avgFinish ? h2h.b.avgFinish.toFixed(1) : '—'}
+              value={h2h.b.wins}
+              label="Wins"
+              comparisonValue={h2h.a.wins}
+              betterIs="higher"
+            />
+            <StatCard
+              value={h2h.b.points}
+              label="Points"
+              comparisonValue={h2h.a.points}
+              betterIs="higher"
+            />
+            <StatCard
+              value={h2h.b.avgFinish}
               label="Avg. Finish"
+              comparisonValue={h2h.a.avgFinish}
+              betterIs="lower"
+              decimals={1}
             />
           </div>
         </div>
@@ -114,11 +144,56 @@ export function HeadToHead({ h2h, driverA, driverB }: HeadToHeadProps) {
   )
 }
 
-function StatCard({ value, label }: { value: number | string; label: string }) {
+type StatCardProps = {
+  value: number | null
+  label: string
+  comparisonValue?: number | null
+  betterIs?: 'higher' | 'lower'
+  decimals?: number
+}
+
+function StatCard({ value, label, comparisonValue, betterIs, decimals = 0 }: StatCardProps) {
+  // Determine if this value is better
+  const isBetter =
+    value !== null &&
+    comparisonValue !== null &&
+    betterIs &&
+    (betterIs === 'higher' ? value > (comparisonValue ?? 0) : value < (comparisonValue ?? Infinity))
+
+  const isWorse =
+    value !== null &&
+    comparisonValue !== null &&
+    betterIs &&
+    (betterIs === 'higher' ? value < (comparisonValue ?? 0) : value > (comparisonValue ?? 0))
+
   return (
-    <div className="bg-zinc-100 dark:bg-f1-carbon/50 rounded-lg p-2 sm:p-4 space-y-1 sm:space-y-3 border border-zinc-200/50 dark:border-f1-steel/50">
-      <div className="text-center text-lg sm:text-2xl font-bold font-mono leading-tight">
-        {value}
+    <div
+      className={`bg-zinc-100 dark:bg-f1-carbon/50 rounded-lg p-2 sm:p-4 space-y-1 sm:space-y-3 border transition-colors ${
+        isBetter
+          ? 'border-accent-neon/50 bg-accent-neon/5'
+          : 'border-zinc-200/50 dark:border-f1-steel/50'
+      }`}
+    >
+      <div
+        className={`text-center text-lg sm:text-2xl font-bold font-mono leading-tight ${
+          isBetter ? 'text-accent-neon' : isWorse ? 'text-f1-silver' : ''
+        }`}
+      >
+        {value !== null ? (
+          <AnimatedCounter value={value} decimals={decimals} />
+        ) : (
+          '—'
+        )}
+        {isBetter && (
+          <motion.span
+            initial={{ opacity: 0, scale: 0 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 1.5 }}
+            className="ml-1 text-accent-neon"
+          >
+            ★
+          </motion.span>
+        )}
       </div>
       <div className="text-center text-[10px] sm:text-sm text-f1-silver">{label}</div>
     </div>

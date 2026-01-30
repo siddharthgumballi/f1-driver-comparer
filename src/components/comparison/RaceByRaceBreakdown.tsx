@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Driver, RaceResult } from '../../types'
 import { GlassCard } from '../ui/GlassCard'
+import { NationalityFlag } from '../ui/NationalityFlag'
 
 type RaceByRaceBreakdownProps = {
   racesA: RaceResult[]
@@ -103,10 +104,16 @@ export function RaceByRaceBreakdown({
             <tr>
               <th className="px-4 py-2 text-left font-medium">Race</th>
               <th className="px-4 py-2 text-center font-medium text-f1-red">
-                {driverA.familyName}
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <NationalityFlag nationality={driverA.nationality} size="sm" />
+                  {driverA.familyName}
+                </span>
               </th>
               <th className="px-4 py-2 text-center font-medium text-accent-cyan">
-                {driverB.familyName}
+                <span className="inline-flex items-center justify-center gap-1.5">
+                  <NationalityFlag nationality={driverB.nationality} size="sm" />
+                  {driverB.familyName}
+                </span>
               </th>
             </tr>
           </thead>

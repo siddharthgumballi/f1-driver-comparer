@@ -3,24 +3,11 @@
 import type { Driver } from '../types'
 
 const CURRENT_SEASON = 2025
+const F1_OFFICIAL_START_YEAR = 2019 // F1 has official driver images from 2019 onwards
 
+// Only use Wikipedia overrides for drivers before 2019 (no F1 official images available)
 const DRIVER_PHOTO_OVERRIDES: Record<string, string> = {
-  jos_verstappen:
-    'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',
-  josverstappen:
-    'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',
-  vettel:
-    'https://upload.wikimedia.org/wikipedia/commons/8/8b/Sebastian_Vettel_2017_Malaysia_2.jpg',
-  sebastian_vettel:
-    'https://upload.wikimedia.org/wikipedia/commons/8/8b/Sebastian_Vettel_2017_Malaysia_2.jpg',
-  sebastianvettel:
-    'https://upload.wikimedia.org/wikipedia/commons/8/8b/Sebastian_Vettel_2017_Malaysia_2.jpg',
-  ricciardo:
-    'https://upload.wikimedia.org/wikipedia/commons/6/6d/Daniel_Ricciardo_2017_Malaysia_3.jpg',
-  daniel_ricciardo:
-    'https://upload.wikimedia.org/wikipedia/commons/6/6d/Daniel_Ricciardo_2017_Malaysia_3.jpg',
-  danielricciardo:
-    'https://upload.wikimedia.org/wikipedia/commons/6/6d/Daniel_Ricciardo_2017_Malaysia_3.jpg',
+  // Pre-2019 drivers need Wikipedia images
   schumacher:
     'https://upload.wikimedia.org/wikipedia/commons/0/06/Michael_Schumacher_2010_Malaysia_3rd_Free_Practice.jpg',
   michael_schumacher:
@@ -31,13 +18,17 @@ const DRIVER_PHOTO_OVERRIDES: Record<string, string> = {
     'https://upload.wikimedia.org/wikipedia/commons/d/d6/Ralf_Schumacher_at_2014_DTM_Temperary_Pit.jpg',
   ralfschumacher:
     'https://upload.wikimedia.org/wikipedia/commons/d/d6/Ralf_Schumacher_at_2014_DTM_Temperary_Pit.jpg',
+  jos_verstappen:
+    'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',
+  josverstappen:
+    'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',
 }
 
 const legacyPhotoCache = new Map<string, string>()
 const legacyPhotoInFlight = new Map<string, Promise<string | null>>()
 
-function buildDriverPhotoUrl(slug: string): string {
-  return `https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/${CURRENT_SEASON}Drivers/${slug}.png`
+function buildDriverPhotoUrl(slug: string, year: number): string {
+  return `https://media.formula1.com/d_driver_fallback_image.png/content/dam/fom-website/drivers/${year}Drivers/${slug}.png`
 }
 
 function lookupOverride(driver: Driver): string | undefined {
@@ -54,12 +45,24 @@ function lookupOverride(driver: Driver): string | undefined {
   return undefined
 }
 
-export function getDriverPhotoUrl(driver: Driver): string {
+/**
+ * Get the F1 official driver photo URL
+ * @param driver - The driver object
+ * @param lastSeason - The driver's last active season (used for retired drivers)
+ * @returns URL to the driver photo
+ */
+export function getDriverPhotoUrl(driver: Driver, lastSeason?: number | null): string {
   const override = lookupOverride(driver)
   if (override) return override
 
   const slug = driver.familyName.toLowerCase().replace(/[^a-z]/g, '')
-  return buildDriverPhotoUrl(slug)
+
+  // Determine which year's photo to use
+  // For current drivers, use current season
+  // For retired drivers (2019+), use their last season
+  const photoYear = lastSeason && lastSeason < CURRENT_SEASON ? lastSeason : CURRENT_SEASON
+
+  return buildDriverPhotoUrl(slug, photoYear)
 }
 
 function isPortraitish(meta: { thumbnail?: { width?: number; height?: number }; originalimage?: { width?: number; height?: number } }): boolean {
@@ -117,7 +120,11 @@ export async function fetchLegacyDriverPhoto(driver: Driver): Promise<string | n
   return promise
 }
 
+/**
+ * Determine if we should use Wikipedia/legacy photos for a driver
+ * Only use legacy photos for drivers who retired before 2019 (no F1 official images available)
+ */
 export function shouldUseLegacyPhoto(lastSeason: number | null | undefined): boolean {
   const season = lastSeason ?? CURRENT_SEASON
-  return season < CURRENT_SEASON - 2
+  return season < F1_OFFICIAL_START_YEAR // Only use Wikipedia for pre-2019 drivers
 }

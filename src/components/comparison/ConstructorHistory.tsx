@@ -2,7 +2,9 @@ import { motion } from 'framer-motion'
 import type { DriverStats, Driver } from '../../types'
 import { numberFmt, formatYearRange } from '../../lib/formatters'
 import { splitConstructorStints, getConstructorCarUrl } from '../../lib/constructorImages'
+import { getTeamColor } from '../../lib/teamColors'
 import { GlassCard } from '../ui/GlassCard'
+import { NationalityFlag } from '../ui/NationalityFlag'
 
 type ConstructorHistoryProps = {
   statsA: DriverStats
@@ -31,7 +33,6 @@ export function ConstructorHistory({ statsA, statsB, driverA, driverB }: Constru
         <ConstructorColumn
           stints={stintsA}
           driver={driverA}
-          activeYearTo={statsA.activeYears?.to}
           accent="red"
         />
 
@@ -39,7 +40,6 @@ export function ConstructorHistory({ statsA, statsB, driverA, driverB }: Constru
         <ConstructorColumn
           stints={stintsB}
           driver={driverB}
-          activeYearTo={statsB.activeYears?.to}
           accent="cyan"
         />
       </div>
@@ -50,11 +50,10 @@ export function ConstructorHistory({ statsA, statsB, driverA, driverB }: Constru
 type ConstructorColumnProps = {
   stints: ReturnType<typeof splitConstructorStints>
   driver: Driver
-  activeYearTo?: number
   accent: 'red' | 'cyan'
 }
 
-function ConstructorColumn({ stints, driver, activeYearTo, accent }: ConstructorColumnProps) {
+function ConstructorColumn({ stints, driver, accent }: ConstructorColumnProps) {
   const accentColor = accent === 'red' ? 'text-f1-red' : 'text-accent-cyan'
   const badgeColor =
     accent === 'red'
@@ -65,7 +64,8 @@ function ConstructorColumn({ stints, driver, activeYearTo, accent }: Constructor
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <div className={`text-sm font-medium ${accentColor}`}>
+        <div className={`text-sm font-medium ${accentColor} flex items-center gap-1.5`}>
+          <NationalityFlag nationality={driver.nationality} size="sm" />
           {driver.givenName} {driver.familyName}
         </div>
         <div className="text-xs text-f1-silver dark:text-zinc-500">Most recent first</div>
@@ -76,7 +76,10 @@ function ConstructorColumn({ stints, driver, activeYearTo, accent }: Constructor
           const from = seasonsSorted[0]
           const to = seasonsSorted[seasonsSorted.length - 1]
           const yearsLabel = formatYearRange(from, to)
-          const carSrc = getConstructorCarUrl(activeYearTo || to, stint.constructorId, stint.name)
+          // Use the stint's actual final year to show the correct livery for that era
+          const carSrc = getConstructorCarUrl(to, stint.constructorId, stint.name)
+
+          const teamColor = getTeamColor(stint.constructorId)
 
           return (
             <motion.div
@@ -86,12 +89,18 @@ function ConstructorColumn({ stints, driver, activeYearTo, accent }: Constructor
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
+              {/* Team color accent strip */}
+              <div
+                className="absolute top-0 left-0 right-0 h-1"
+                style={{ backgroundColor: teamColor.primary }}
+              />
+
               {/* Car image for most recent stint */}
               {index === 0 && carSrc && (
                 <div className="pointer-events-none absolute inset-y-0 right-0 w-40 opacity-60 group-hover:opacity-80 transition-opacity">
                   <img
                     src={carSrc}
-                    alt={`${stint.name} ${activeYearTo || to} car`}
+                    alt={`${stint.name} ${to} car`}
                     className="h-full w-full object-contain object-right"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement
@@ -102,10 +111,14 @@ function ConstructorColumn({ stints, driver, activeYearTo, accent }: Constructor
                 </div>
               )}
 
-              <div className="relative z-10 pr-10">
+              <div className="relative z-10 pr-10 pt-1">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <div className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+                    <div className="text-base font-semibold text-zinc-900 dark:text-zinc-100 flex items-center gap-2">
+                      <span
+                        className="inline-block w-2.5 h-2.5 rounded-full"
+                        style={{ backgroundColor: teamColor.primary }}
+                      />
                       {stint.name}
                     </div>
                     <div

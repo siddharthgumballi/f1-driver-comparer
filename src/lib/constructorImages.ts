@@ -61,44 +61,80 @@ export function getConstructorCarUrl(
   const id = constructorId.toLowerCase()
   if (year >= CURRENT_SEASON && CONSTRUCTOR_CARS[id]) return CONSTRUCTOR_CARS[id]
 
-  const slugById: Record<string, string> = {
-    red_bull: 'red-bull-racing',
-    alfa: year >= 2024 ? 'kick-sauber' : year === 2021 ? 'alfa' : 'alfa-romeo',
-    kick_sauber: 'kick-sauber',
-    sauber: 'sauber',
-    alphatauri: year >= 2024 ? 'rb' : 'alphatauri',
-    racing_bulls: 'rb',
-    rb: 'rb',
-    toro_rosso: 'toro-rosso',
-  }
+  // Comprehensive slug mapping for all years
+  const getSlugForYear = (constructorId: string, year: number, name: string): string => {
+    const lowerName = name.toLowerCase()
 
-  let slug = slugById[id]
-
-  if (!slug) {
-    slug = constructorSlugFromName(constructorName)
-  }
-
-  if (year === 2024) {
-    if (
-      constructorName.toLowerCase().includes('kick') ||
-      constructorName.toLowerCase().includes('sauber') ||
-      constructorName.toLowerCase().includes('alfa')
-    ) {
-      slug = 'kick-sauber'
+    // Red Bull
+    if (constructorId === 'red_bull' || lowerName.includes('red bull')) {
+      return 'red-bull-racing'
     }
+
+    // Alfa Romeo / Sauber lineage
+    if (constructorId === 'alfa' || lowerName.includes('alfa')) {
+      if (year >= 2024) return 'kick-sauber'
+      if (year >= 2019) return 'alfa-romeo-racing' // 2019-2023: Alfa Romeo Racing
+      return 'sauber' // Before 2019
+    }
+    if (constructorId === 'sauber' || lowerName.includes('sauber')) {
+      if (year >= 2024) return 'kick-sauber'
+      if (year >= 2019 && year <= 2023) return 'alfa-romeo-racing'
+      return 'sauber'
+    }
+    if (constructorId === 'kick_sauber') return 'kick-sauber'
+
+    // AlphaTauri / Toro Rosso / RB lineage
+    if (constructorId === 'alphatauri' || lowerName.includes('alphatauri')) {
+      if (year >= 2024) return 'rb'
+      return 'alphatauri' // 2020-2023
+    }
+    if (constructorId === 'toro_rosso' || lowerName.includes('toro rosso')) {
+      return 'toro-rosso' // Before 2020
+    }
+    if (constructorId === 'rb' || constructorId === 'racing_bulls') {
+      return 'rb'
+    }
+
+    // Racing Point / Force India / Aston Martin lineage
+    if (constructorId === 'aston_martin' || lowerName.includes('aston martin')) {
+      return 'aston-martin'
+    }
+    if (constructorId === 'racing_point' || lowerName.includes('racing point')) {
+      return 'racing-point'
+    }
+    if (constructorId === 'force_india' || lowerName.includes('force india')) {
+      return 'force-india'
+    }
+
+    // Renault / Alpine lineage
+    if (constructorId === 'alpine' || lowerName.includes('alpine')) {
+      return 'alpine'
+    }
+    if (constructorId === 'renault' || lowerName.includes('renault')) {
+      return 'renault'
+    }
+
+    // Lotus
+    if (constructorId === 'lotus_f1' || lowerName.includes('lotus')) {
+      return 'lotus'
+    }
+
+    // Haas
+    if (constructorId === 'haas' || lowerName.includes('haas')) {
+      return 'haas-f1-team'
+    }
+
+    // Standard teams
+    if (constructorId === 'mercedes') return 'mercedes'
+    if (constructorId === 'ferrari') return 'ferrari'
+    if (constructorId === 'mclaren') return 'mclaren'
+    if (constructorId === 'williams') return 'williams'
+
+    // Fallback: convert name to slug
+    return constructorSlugFromName(name)
   }
 
-  if (!slug || slug === 'alfa') {
-    if (constructorName.toLowerCase().includes('alfa')) {
-      if (year === 2021) {
-        slug = 'alfa'
-      } else if (year >= 2024) {
-        slug = 'kick-sauber'
-      } else {
-        slug = 'alfa-romeo'
-      }
-    }
-  }
+  const slug = getSlugForYear(id, year, constructorName)
 
   return `https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/${year}/${slug}.png`
 }
