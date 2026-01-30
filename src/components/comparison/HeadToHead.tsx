@@ -153,18 +153,21 @@ type StatCardProps = {
 }
 
 function StatCard({ value, label, comparisonValue, betterIs, decimals = 0 }: StatCardProps) {
-  // Determine if this value is better
+  // Determine if this value is better - ensure both values are valid numbers
+  const valNum = typeof value === 'number' ? value : null
+  const compNum = typeof comparisonValue === 'number' ? comparisonValue : null
+
   const isBetter =
-    value !== null &&
-    comparisonValue !== null &&
+    valNum !== null &&
+    compNum !== null &&
     betterIs &&
-    (betterIs === 'higher' ? value > (comparisonValue ?? 0) : value < (comparisonValue ?? Infinity))
+    (betterIs === 'higher' ? valNum > compNum : valNum < compNum)
 
   const isWorse =
-    value !== null &&
-    comparisonValue !== null &&
+    valNum !== null &&
+    compNum !== null &&
     betterIs &&
-    (betterIs === 'higher' ? value < (comparisonValue ?? 0) : value > (comparisonValue ?? 0))
+    (betterIs === 'higher' ? valNum < compNum : valNum > compNum)
 
   return (
     <div
