@@ -50,6 +50,11 @@ const teamColors: Record<string, TeamColor> = {
     secondary: '#1E5BC6',
     text: '#FFFFFF',
   },
+  'racing_bulls': {
+    primary: '#6692FF',
+    secondary: '#1E5BC6',
+    text: '#FFFFFF',
+  },
   'alphatauri': {
     primary: '#6692FF',
     secondary: '#1E5BC6',
@@ -74,6 +79,16 @@ const teamColors: Record<string, TeamColor> = {
     primary: '#B6BABD',
     secondary: '#E10600',
     text: '#000000',
+  },
+  'audi': {
+    primary: '#FF0000',
+    secondary: '#000000',
+    text: '#FFFFFF',
+  },
+  'cadillac': {
+    primary: '#1E3264',
+    secondary: '#C4A747',
+    text: '#FFFFFF',
   },
 
   // Historic teams

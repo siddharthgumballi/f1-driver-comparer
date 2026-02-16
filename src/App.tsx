@@ -160,28 +160,37 @@ export default function App() {
   const showEmptyState = !driverA && !driverB && !loadingA && !loadingB
 
   return (
-    <div className="relative min-h-screen bg-white dark:bg-f1-black text-zinc-900 dark:text-f1-white p-4 md:p-8 overflow-hidden">
-      {/* F1 Track Background */}
-      <div className="absolute inset-0 -z-10 opacity-[0.04] dark:opacity-[0.03] no-print">
-        <div className="absolute inset-0 bg-[url('https://www.formula1.com/etc/designs/fom-website/images/patterns/01-f1-circuit.svg')] bg-cover bg-center" />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-transparent to-white/90 dark:from-f1-black/90 dark:to-f1-black/90" />
-      </div>
+    <div className="relative min-h-screen bg-white dark:bg-f1-black text-zinc-900 dark:text-f1-white px-4 md:px-6 lg:px-10 py-6 overflow-hidden">
+      {/* Dot Grid Background */}
+      <div className="absolute inset-0 -z-10 dot-grid-bg no-print" />
 
       <motion.div
-        className="max-w-6xl mx-auto"
+        className="max-w-[1800px] mx-auto"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <Header
-          live={live}
-          onLiveChange={setLive}
-          darkMode={darkMode}
-          onDarkModeChange={setDarkMode}
-        />
+        <div className="no-print">
+          <Header
+            live={live}
+            onLiveChange={setLive}
+            darkMode={darkMode}
+            onDarkModeChange={setDarkMode}
+          />
+        </div>
+
+        {/* Print Header - only visible when printing */}
+        <div className="hidden print:block mb-6">
+          <h1 className="text-2xl font-bold text-black">F1 Driver Comparer</h1>
+          {driverA && driverB && (
+            <p className="text-sm text-gray-600 mt-1">
+              {driverA.givenName} {driverA.familyName} vs {driverB.givenName} {driverB.familyName}
+            </p>
+          )}
+        </div>
 
         {/* Toolbar */}
-        <div className="flex flex-wrap items-center justify-end gap-2 mb-4 no-print relative z-[200]">
+        <div className="flex flex-wrap items-center justify-end gap-1.5 mb-4 no-print relative z-[200]">
           <HistoryPanel
             recentComparisons={recentComparisons}
             favorites={favorites}
@@ -231,7 +240,7 @@ export default function App() {
         </div>
 
         {/* Driver Selectors */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 relative z-[100] no-print">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8 mb-8 relative z-[100] no-print">
           <div ref={driverASelectRef}>
             <GlassCard variant="red" className="p-6 relative z-[100]">
               <DriverSelect label="Driver A" value={driverA} onChange={setDriverA} disabled={loadingA} />
@@ -256,47 +265,47 @@ export default function App() {
 
         {/* Driver Cards */}
         {hasStats && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 relative z-0 print-card">
-            {/* Driver A Column */}
-            <div className="space-y-4">
-              {loadingA ? (
-                <div className="h-64 flex items-center justify-center no-print">
-                  <F1CarLoader variant="red" />
-                </div>
-              ) : statsA ? (
-                <>
-                  <DriverCard stats={statsA} accent="red" label="Driver A Summary" />
-                  <SeasonBreakdown seasons={statsA.seasons} accent="red" />
-                </>
-              ) : null}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8 xl:gap-8 items-start relative z-0 print-section">
+            {/* Driver A Card */}
+            {loadingA ? (
+              <div className="h-64 flex items-center justify-center no-print">
+                <F1CarLoader variant="red" />
+              </div>
+            ) : statsA ? (
+              <DriverCard stats={statsA} accent="red" label="Driver A Summary" />
+            ) : <div />}
 
-            {/* Driver B Column */}
-            <div className="space-y-4">
-              {loadingB ? (
-                <div className="h-64 flex items-center justify-center no-print">
-                  <F1CarLoader variant="cyan" />
-                </div>
-              ) : statsB ? (
-                <>
-                  <DriverCard stats={statsB} accent="cyan" label="Driver B Summary" />
-                  <SeasonBreakdown seasons={statsB.seasons} accent="cyan" />
-                </>
-              ) : null}
-            </div>
+            {/* Driver B Card */}
+            {loadingB ? (
+              <div className="h-64 flex items-center justify-center no-print">
+                <F1CarLoader variant="cyan" />
+              </div>
+            ) : statsB ? (
+              <DriverCard stats={statsB} accent="cyan" label="Driver B Summary" />
+            ) : <div />}
+
+            {/* Driver A Season Breakdown */}
+            {!loadingA && statsA ? (
+              <SeasonBreakdown seasons={statsA.seasons} accent="red" />
+            ) : <div />}
+
+            {/* Driver B Season Breakdown */}
+            {!loadingB && statsB ? (
+              <SeasonBreakdown seasons={statsB.seasons} accent="cyan" />
+            ) : <div />}
           </div>
         )}
 
         {/* Head to Head */}
         {bothSelected && h2h && h2h.racesTogether > 0 && (
-          <div className="mt-8 print-card" ref={h2hSectionRef} id="head-to-head">
+          <div className="mt-8 print-page" ref={h2hSectionRef} id="head-to-head">
             <HeadToHead h2h={h2h} driverA={driverA} driverB={driverB} />
           </div>
         )}
 
         {/* Career Progression Chart */}
         {statsA && statsB && (
-          <div className="mt-8 print-card">
+          <div className="mt-8 print-page">
             <CareerProgressionChart
               statsA={statsA}
               statsB={statsB}
@@ -308,7 +317,7 @@ export default function App() {
 
         {/* Championship Timeline */}
         {statsA && statsB && (champYearsA.length > 0 || champYearsB.length > 0) && (
-          <div className="mt-8 print-card">
+          <div className="mt-8 print-page">
             <ChampionshipTimeline
               statsA={statsA}
               statsB={statsB}
@@ -322,7 +331,7 @@ export default function App() {
 
         {/* Race by Race Breakdown */}
         {racesA.length > 0 && racesB.length > 0 && driverA && driverB && (
-          <div className="mt-8 print-card">
+          <div className="mt-8 print-page">
             <RaceByRaceBreakdown
               racesA={racesA}
               racesB={racesB}
@@ -334,7 +343,7 @@ export default function App() {
 
         {/* Constructor History */}
         {statsA && statsB && (
-          <div className="mt-8 print-card">
+          <div className="mt-8 print-page">
             <ConstructorHistory
               statsA={statsA}
               statsB={statsB}
@@ -366,9 +375,8 @@ export default function App() {
         )}
 
         {/* Print Footer */}
-        <div className="hidden print:block mt-8 pt-4 border-t border-gray-300 text-center text-sm text-gray-500">
-          <p>F1 Driver Comparer - Generated on {new Date().toLocaleDateString()}</p>
-          <p className="text-xs mt-1">Data sourced from Ergast F1 API</p>
+        <div className="hidden print:block print-footer">
+          F1 Driver Comparer &middot; Generated {new Date().toLocaleDateString()} &middot; Data from Ergast F1 API
         </div>
       </motion.div>
     </div>

@@ -34,8 +34,9 @@ export function GlassCard({
   return (
     <motion.div
       className={`
-        rounded-2xl border backdrop-blur-xl shadow-glass
+        rounded-xl border backdrop-blur-xl shadow-glass
         transition-all duration-300
+        ring-1 ring-inset ring-white/[0.06]
         ${styles.base}
         ${hover ? styles.hover : ''}
         ${className}

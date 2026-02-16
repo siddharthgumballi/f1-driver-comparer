@@ -68,7 +68,7 @@ export function DriverCard({ stats, accent, label }: DriverCardProps) {
       if (!currentTeamInfo) return null
       return {
         src: getConstructorCarUrl(2025, currentTeamInfo.constructorId, currentTeamInfo.name),
-        alt: `${currentTeamInfo.name} 2025 car`,
+        alt: `${currentTeamInfo.name} car`,
       }
     } else {
       // Retired driver - use their last constructor's final season car
@@ -97,7 +97,7 @@ export function DriverCard({ stats, accent, label }: DriverCardProps) {
   }
 
   return (
-    <GlassCard variant={accent} className="p-5 relative overflow-hidden">
+    <GlassCard variant={accent} className="p-5 relative overflow-hidden h-full">
       {/* Team Color Accent Strip */}
       <TeamColorStrip constructorId={displayConstructorId} position="top" thickness={3} />
 

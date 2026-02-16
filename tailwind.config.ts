@@ -74,6 +74,9 @@ export default {
         display: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['ui-monospace', 'SFMono-Regular', 'Monaco', 'Consolas', 'monospace'],
       },
+      letterSpacing: {
+        tighter: '-0.02em',
+      },
       borderRadius: {
         '2xl': '1rem',
         '3xl': '1.5rem',

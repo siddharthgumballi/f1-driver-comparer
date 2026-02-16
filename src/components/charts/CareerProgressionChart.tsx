@@ -13,6 +13,7 @@ import {
   Cell,
   Sector,
 } from 'recharts'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { DriverStats, Driver } from '../../types'
 import { GlassCard } from '../ui/GlassCard'
 import { NationalityFlag } from '../ui/NationalityFlag'
@@ -24,7 +25,7 @@ type ViewType = 'line' | 'pie'
 const DRIVER_A_COLOR = '#E10600'
 const DRIVER_B_COLOR = '#00D4FF'
 
-// Custom active shape for 3D effect on hover - expands the slice
+// Custom active shape — bigger expansion, center text, glow ring
 const renderActiveShape = (props: any) => {
   const {
     cx,
@@ -34,26 +35,28 @@ const renderActiveShape = (props: any) => {
     startAngle,
     endAngle,
     fill,
+    payload,
   } = props
 
   return (
     <g>
-      {/* 3D shadow for active slice */}
+      {/* Glow ring around the active slice */}
       <Sector
         cx={cx}
-        cy={cy + 6}
-        innerRadius={innerRadius}
+        cy={cy}
+        innerRadius={outerRadius + 4}
         outerRadius={outerRadius + 8}
         startAngle={startAngle}
         endAngle={endAngle}
-        fill="rgba(0,0,0,0.4)"
+        fill={payload.color}
+        style={{ opacity: 0.5 }}
       />
-      {/* Expanded active slice */}
+      {/* Expanded active slice (+10px) */}
       <Sector
         cx={cx}
         cy={cy}
         innerRadius={innerRadius}
-        outerRadius={outerRadius + 8}
+        outerRadius={outerRadius + 10}
         startAngle={startAngle}
         endAngle={endAngle}
         fill={fill}
@@ -61,16 +64,30 @@ const renderActiveShape = (props: any) => {
           filter: 'drop-shadow(0 4px 12px rgba(0,0,0,0.5))',
         }}
       />
-      {/* Highlight ring on active */}
-      <Sector
-        cx={cx}
-        cy={cy}
-        innerRadius={outerRadius + 2}
-        outerRadius={outerRadius + 5}
-        startAngle={startAngle}
-        endAngle={endAngle}
-        fill="rgba(255,255,255,0.3)"
-      />
+      {/* Driver name in center */}
+      <text
+        x={cx}
+        y={cy - 10}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill="#fff"
+        fontSize={12}
+        fontWeight={700}
+      >
+        {payload.name.split(' ').pop()}
+      </text>
+      {/* Value in center */}
+      <text
+        x={cx}
+        y={cy + 10}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill={payload.color}
+        fontSize={16}
+        fontWeight={900}
+      >
+        {payload.value.toLocaleString()}
+      </text>
     </g>
   )
 }
@@ -91,6 +108,7 @@ export function CareerProgressionChart({
   const [metric, setMetric] = useState<MetricType>('points')
   const [view, setView] = useState<ViewType>('line')
   const [activeIndex, setActiveIndex] = useState(0)
+  const [lockedIndex, setLockedIndex] = useState<number | null>(null)
 
   // Calculate totals for pie chart
   const pieData = useMemo(() => {
@@ -112,6 +130,10 @@ export function CareerProgressionChart({
       },
     ]
   }, [statsA.seasons, statsB.seasons, metric, driverA, driverB])
+
+  const total = pieData[0].value + pieData[1].value
+  const percentA = total > 0 ? (pieData[0].value / total) * 100 : 50
+  const percentB = total > 0 ? (pieData[1].value / total) * 100 : 50
 
   const chartData = useMemo(() => {
     const allYears = new Set<number>()
@@ -141,6 +163,17 @@ export function CareerProgressionChart({
   }
 
   const onPieEnter = (_: any, index: number) => {
+    setActiveIndex(index)
+  }
+
+  const onPieLeave = () => {
+    if (lockedIndex !== null) {
+      setActiveIndex(lockedIndex)
+    }
+  }
+
+  const onPieClick = (_: any, index: number) => {
+    setLockedIndex((prev) => (prev === index ? null : index))
     setActiveIndex(index)
   }
 
@@ -273,6 +306,9 @@ export function CareerProgressionChart({
                   : 'bg-zinc-800/50 hover:bg-zinc-800/70'
               }`}
               onMouseEnter={() => setActiveIndex(0)}
+              onMouseLeave={onPieLeave}
+              onClick={() => onPieClick(null, 0)}
+              style={{ cursor: 'pointer' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-3 h-3 rounded-full bg-f1-red shadow-lg shadow-f1-red/50" />
@@ -280,100 +316,91 @@ export function CareerProgressionChart({
                 <span className="text-sm font-bold text-white truncate">
                   {driverA.givenName} {driverA.familyName}
                 </span>
+                {lockedIndex === 0 && (
+                  <svg className="w-3 h-3 text-f1-red flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                )}
               </div>
-              <div className="text-3xl font-black text-f1-red mb-1">
-                {pieData[0].value.toLocaleString()}
-              </div>
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  key={`a-${pieData[0].value}-${metric}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  className="text-3xl font-black text-f1-red mb-1"
+                >
+                  {pieData[0].value.toLocaleString()}
+                </motion.div>
+              </AnimatePresence>
               <div className="text-xs text-f1-silver">
-                {((pieData[0].value / (pieData[0].value + pieData[1].value)) * 100).toFixed(1)}% of total {metricLabel[metric].toLowerCase()}
+                {percentA.toFixed(1)}% of total {metricLabel[metric].toLowerCase()}
+              </div>
+              {/* Animated percentage bar */}
+              <div className="mt-2 h-1 rounded-full bg-zinc-700/50 overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${percentA}%`,
+                    background: `linear-gradient(to right, ${DRIVER_A_COLOR}, transparent)`,
+                    transition: 'width 0.6s ease-out',
+                  }}
+                />
               </div>
             </div>
 
-            {/* 3D Pie Chart - Center */}
-            <div className="w-48 h-full flex-shrink-0 relative">
-              {/* 3D tilt effect container */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  transform: 'perspective(800px) rotateX(15deg)',
-                  transformStyle: 'preserve-3d'
-                }}
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <defs>
-                      {/* Gradient definitions for 3D effect */}
-                      <linearGradient id="pieGradientA" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#FF4D40" />
-                        <stop offset="50%" stopColor="#E10600" />
-                        <stop offset="100%" stopColor="#8B0000" />
-                      </linearGradient>
-                      <linearGradient id="pieGradientB" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#40FFFF" />
-                        <stop offset="50%" stopColor="#00D4FF" />
-                        <stop offset="100%" stopColor="#006699" />
-                      </linearGradient>
-                      {/* Drop shadow filter */}
-                      <filter id="shadow3d" x="-50%" y="-50%" width="200%" height="200%">
-                        <feDropShadow dx="0" dy="8" stdDeviation="6" floodColor="#000" floodOpacity="0.5" />
-                      </filter>
-                    </defs>
-                    {/* Bottom shadow layer for 3D depth */}
-                    <Pie
-                      data={pieData}
-                      cx="50%"
-                      cy="55%"
-                      innerRadius={35}
-                      outerRadius={70}
-                      dataKey="value"
-                      stroke="none"
-                      isAnimationActive={false}
-                    >
-                      {pieData.map((_, index) => (
-                        <Cell
-                          key={`shadow-${index}`}
-                          fill="rgba(0,0,0,0.4)"
-                        />
-                      ))}
-                    </Pie>
-                    {/* Main pie with active shape */}
-                    {(() => {
-                      const PieComponent = Pie as any
-                      return (
-                        <PieComponent
-                          activeIndex={activeIndex}
-                          activeShape={renderActiveShape}
-                          data={pieData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={35}
-                          outerRadius={70}
-                          dataKey="value"
-                          onMouseEnter={onPieEnter}
-                          stroke="rgba(255,255,255,0.1)"
-                          strokeWidth={1}
-                          style={{ filter: 'url(#shadow3d)' }}
-                        >
-                          {pieData.map((_: any, index: number) => (
-                            <Cell
-                              key={`cell-${index}`}
-                              fill={`url(#pieGradient${index === 0 ? 'A' : 'B'})`}
-                              style={{ cursor: 'pointer' }}
-                            />
-                          ))}
-                        </PieComponent>
-                      )
-                    })()}
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              {/* Total in center - positioned below the tilted chart */}
-              <div className="absolute bottom-2 left-0 right-0 text-center">
-                <div className="text-[10px] text-f1-silver uppercase tracking-wider">Total</div>
-                <div className="text-lg font-bold text-white">
-                  {(pieData[0].value + pieData[1].value).toLocaleString()}
-                </div>
-              </div>
+            {/* Pie Chart - Center (no 3D tilt, bigger) */}
+            <div
+              className="w-64 h-full flex-shrink-0 relative"
+              onMouseLeave={onPieLeave}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <defs>
+                    <linearGradient id="pieGradientA" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#FF4D40" />
+                      <stop offset="50%" stopColor="#E10600" />
+                      <stop offset="100%" stopColor="#8B0000" />
+                    </linearGradient>
+                    <linearGradient id="pieGradientB" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#40FFFF" />
+                      <stop offset="50%" stopColor="#00D4FF" />
+                      <stop offset="100%" stopColor="#006699" />
+                    </linearGradient>
+                  </defs>
+                  {(() => {
+                    const PieComponent = Pie as any
+                    return (
+                      <PieComponent
+                        activeIndex={activeIndex}
+                        activeShape={renderActiveShape}
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        dataKey="value"
+                        onMouseEnter={onPieEnter}
+                        onMouseLeave={onPieLeave}
+                        onClick={onPieClick}
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth={1}
+                        animationDuration={600}
+                        animationEasing="ease-out"
+                      >
+                        {pieData.map((_: any, index: number) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={`url(#pieGradient${index === 0 ? 'A' : 'B'})`}
+                            style={{ cursor: 'pointer' }}
+                          />
+                        ))}
+                      </PieComponent>
+                    )
+                  })()}
+                </PieChart>
+              </ResponsiveContainer>
             </div>
 
             {/* Driver B Card - Right */}
@@ -384,6 +411,9 @@ export function CareerProgressionChart({
                   : 'bg-zinc-800/50 hover:bg-zinc-800/70'
               }`}
               onMouseEnter={() => setActiveIndex(1)}
+              onMouseLeave={onPieLeave}
+              onClick={() => onPieClick(null, 1)}
+              style={{ cursor: 'pointer' }}
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-3 h-3 rounded-full bg-accent-cyan shadow-lg shadow-accent-cyan/50" />
@@ -391,12 +421,37 @@ export function CareerProgressionChart({
                 <span className="text-sm font-bold text-white truncate">
                   {driverB.givenName} {driverB.familyName}
                 </span>
+                {lockedIndex === 1 && (
+                  <svg className="w-3 h-3 text-accent-cyan flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                )}
               </div>
-              <div className="text-3xl font-black text-accent-cyan mb-1">
-                {pieData[1].value.toLocaleString()}
-              </div>
+              <AnimatePresence mode="popLayout">
+                <motion.div
+                  key={`b-${pieData[1].value}-${metric}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -12 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  className="text-3xl font-black text-accent-cyan mb-1"
+                >
+                  {pieData[1].value.toLocaleString()}
+                </motion.div>
+              </AnimatePresence>
               <div className="text-xs text-f1-silver">
-                {((pieData[1].value / (pieData[0].value + pieData[1].value)) * 100).toFixed(1)}% of total {metricLabel[metric].toLowerCase()}
+                {percentB.toFixed(1)}% of total {metricLabel[metric].toLowerCase()}
+              </div>
+              {/* Animated percentage bar */}
+              <div className="mt-2 h-1 rounded-full bg-zinc-700/50 overflow-hidden">
+                <div
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${percentB}%`,
+                    background: `linear-gradient(to right, ${DRIVER_B_COLOR}, transparent)`,
+                    transition: 'width 0.6s ease-out',
+                  }}
+                />
               </div>
             </div>
           </div>

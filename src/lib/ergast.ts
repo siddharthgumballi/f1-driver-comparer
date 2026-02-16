@@ -29,7 +29,7 @@ export type Driver = {
   nationality?: string
 }
 
-const CURRENT_SEASON = 2025
+const CURRENT_SEASON = 2026
 
 const DRIVER_PHOTO_OVERRIDES: Record<string, string> = {
   jos_verstappen: 'https://upload.wikimedia.org/wikipedia/commons/1/16/Jos_Verstappen_2011_WEC.jpg',

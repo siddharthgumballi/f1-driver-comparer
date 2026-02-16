@@ -23,14 +23,18 @@ export const CONSTRUCTOR_CARS: Record<string, string> = {
   racing_bulls:
     'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/rb.png',
   rb: 'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/rb.png',
-  alfa: 'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/kick-sauber.png',
+  audi:
+    'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/kick-sauber.png',
   sauber:
     'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/kick-sauber.png',
   kick_sauber:
     'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/kick-sauber.png',
+  alfa: 'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/kick-sauber.png',
   williams:
     'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/williams.png',
   haas: 'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/haas-f1-team.png',
+  cadillac:
+    'https://media.formula1.com/d_team_car_fallback_image.png/content/dam/fom-website/teams/2025/cadillac.png',
 }
 
 function constructorSlugFromName(name: string): string {
@@ -72,16 +76,23 @@ export function getConstructorCarUrl(
 
     // Alfa Romeo / Sauber lineage
     if (constructorId === 'alfa' || lowerName.includes('alfa')) {
+      if (year >= 2026) return 'audi'
       if (year >= 2024) return 'kick-sauber'
       if (year >= 2019) return 'alfa-romeo-racing' // 2019-2023: Alfa Romeo Racing
       return 'sauber' // Before 2019
     }
     if (constructorId === 'sauber' || lowerName.includes('sauber')) {
+      if (year >= 2026) return 'audi'
       if (year >= 2024) return 'kick-sauber'
       if (year >= 2019 && year <= 2023) return 'alfa-romeo-racing'
       return 'sauber'
     }
-    if (constructorId === 'kick_sauber') return 'kick-sauber'
+    if (constructorId === 'kick_sauber') {
+      if (year >= 2026) return 'audi'
+      return 'kick-sauber'
+    }
+    if (constructorId === 'audi' || lowerName.includes('audi')) return 'audi'
+    if (constructorId === 'cadillac' || lowerName.includes('cadillac')) return 'cadillac'
 
     // AlphaTauri / Toro Rosso / RB lineage
     if (constructorId === 'alphatauri' || lowerName.includes('alphatauri')) {
@@ -92,6 +103,7 @@ export function getConstructorCarUrl(
       return 'toro-rosso' // Before 2020
     }
     if (constructorId === 'rb' || constructorId === 'racing_bulls') {
+      if (year >= 2026) return 'racing-bulls'
       return 'rb'
     }
 

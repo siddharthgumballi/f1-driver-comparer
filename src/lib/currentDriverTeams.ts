@@ -1,4 +1,4 @@
-// Current driver-team mappings for 2025/2026 season
+// Current driver-team mappings for 2026 season
 // The Ergast API is no longer updated, so we need manual overrides for current teams
 
 export type CurrentTeamInfo = {
@@ -7,15 +7,15 @@ export type CurrentTeamInfo = {
   since: number // Year they joined
 }
 
-// 2025/2026 F1 Driver lineup
+// 2026 F1 Driver lineup
 const currentDriverTeams: Record<string, CurrentTeamInfo> = {
   // Ferrari
   'hamilton': { constructorId: 'ferrari', name: 'Ferrari', since: 2025 },
   'leclerc': { constructorId: 'ferrari', name: 'Ferrari', since: 2019 },
 
-  // Red Bull
+  // Red Bull (Hadjar promoted from Racing Bulls for 2026)
   'max_verstappen': { constructorId: 'red_bull', name: 'Red Bull', since: 2016 },
-  'lawson': { constructorId: 'red_bull', name: 'Red Bull', since: 2025 },
+  'hadjar': { constructorId: 'red_bull', name: 'Red Bull', since: 2026 },
 
   // Mercedes
   'russell': { constructorId: 'mercedes', name: 'Mercedes', since: 2022 },
@@ -31,32 +31,35 @@ const currentDriverTeams: Record<string, CurrentTeamInfo> = {
 
   // Alpine
   'gasly': { constructorId: 'alpine', name: 'Alpine', since: 2023 },
-  'doohan': { constructorId: 'alpine', name: 'Alpine', since: 2025 },
+  'colapinto': { constructorId: 'alpine', name: 'Alpine', since: 2025 },
 
   // Williams
   'sainz': { constructorId: 'williams', name: 'Williams', since: 2025 },
   'albon': { constructorId: 'williams', name: 'Williams', since: 2022 },
 
-  // RB (VCARB)
-  'tsunoda': { constructorId: 'rb', name: 'RB', since: 2021 },
-  'hadjar': { constructorId: 'rb', name: 'RB', since: 2025 },
+  // Racing Bulls (Lindblad rookie for 2026)
+  'lawson': { constructorId: 'rb', name: 'Racing Bulls', since: 2025 },
+  'lindblad': { constructorId: 'rb', name: 'Racing Bulls', since: 2026 },
 
   // Haas
   'ocon': { constructorId: 'haas', name: 'Haas', since: 2025 },
   'bearman': { constructorId: 'haas', name: 'Haas', since: 2025 },
 
-  // Kick Sauber (will become Audi in 2026)
-  'hulkenberg': { constructorId: 'sauber', name: 'Kick Sauber', since: 2025 },
-  'bortoleto': { constructorId: 'sauber', name: 'Kick Sauber', since: 2025 },
+  // Audi (formerly Kick Sauber)
+  'hulkenberg': { constructorId: 'audi', name: 'Audi', since: 2025 },
+  'bortoleto': { constructorId: 'audi', name: 'Audi', since: 2025 },
+
+  // Cadillac (new team for 2026)
+  'bottas': { constructorId: 'cadillac', name: 'Cadillac', since: 2026 },
+  'perez': { constructorId: 'cadillac', name: 'Cadillac', since: 2026 },
 
   // Recent drivers who left F1
-  'perez': { constructorId: 'red_bull', name: 'Red Bull', since: 2021 }, // Left end of 2024
+  'tsunoda': { constructorId: 'red_bull', name: 'Red Bull', since: 2025 }, // Left end of 2025
   'ricciardo': { constructorId: 'rb', name: 'RB', since: 2024 }, // Left mid-2024
-  'bottas': { constructorId: 'sauber', name: 'Kick Sauber', since: 2022 }, // Left end of 2024
   'zhou': { constructorId: 'sauber', name: 'Kick Sauber', since: 2022 }, // Left end of 2024
   'magnussen': { constructorId: 'haas', name: 'Haas', since: 2022 }, // Left end of 2024
   'sargeant': { constructorId: 'williams', name: 'Williams', since: 2023 }, // Left mid-2024
-  'colapinto': { constructorId: 'williams', name: 'Williams', since: 2024 }, // Reserve driver
+  'doohan': { constructorId: 'alpine', name: 'Alpine', since: 2025 }, // Dropped after 6 races in 2025
 }
 
 /**
@@ -73,8 +76,8 @@ export function getCurrentTeam(driverId: string): CurrentTeamInfo | null {
 export function isCurrentDriver(driverId: string): boolean {
   const team = currentDriverTeams[driverId]
   if (!team) return false
-  // Consider drivers who joined in 2025 or are still on the grid
-  return team.since <= 2025
+  // Consider drivers who joined in 2026 or are still on the grid
+  return team.since <= 2026
 }
 
 /**
@@ -82,6 +85,6 @@ export function isCurrentDriver(driverId: string): boolean {
  */
 export function getConstructorDrivers(constructorId: string): string[] {
   return Object.entries(currentDriverTeams)
-    .filter(([_, info]) => info.constructorId === constructorId && info.since <= 2025)
+    .filter(([_, info]) => info.constructorId === constructorId && info.since <= 2026)
     .map(([driverId]) => driverId)
 }

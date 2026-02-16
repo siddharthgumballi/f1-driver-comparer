@@ -47,6 +47,29 @@ html {
   }
 }
 
+/* Dot grid background */
+.dot-grid-bg {
+  background-image: radial-gradient(circle, rgba(120, 120, 120, 0.15) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .dot-grid-bg {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+}
+
+/* Tighter heading letter-spacing */
+h1, h2, h3, h4 {
+  letter-spacing: -0.01em;
+}
+
+/* Larger stat numbers in driver cards */
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
 /* F1 font weights */
 @layer utilities {
   .font-f1-wide {
@@ -61,75 +84,224 @@ html {
 
 /* Print styles */
 @media print {
-  /* Reset background and colors for printing */
-  * {
+  @page {
+    margin: 1.5cm;
+    size: A4;
+  }
+
+  /* Force light colors for print */
+  *,
+  *::before,
+  *::after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+    color-scheme: light !important;
   }
 
-  body {
+  /* Reset the root to light theme */
+  html, body, #root {
     background: white !important;
-    color: black !important;
+    color: #111 !important;
+    height: auto !important;
+    overflow: visible !important;
   }
 
-  /* Hide non-essential elements */
-  .no-print,
-  button:not(.print-include),
-  [role="button"]:not(.print-include),
-  .print-hide {
+  /* Strip dark mode backgrounds and force light */
+  .dark,
+  [class*="dark:"] {
+    color-scheme: light !important;
+  }
+
+  /* Hide all non-essential UI elements */
+  .no-print {
     display: none !important;
   }
 
-  /* Ensure cards are visible */
-  .print-card {
-    break-inside: avoid;
-    page-break-inside: avoid;
+  /* Override all dark backgrounds to white */
+  div, section, main, article, aside, header, footer, nav,
+  [class*="bg-f1-black"],
+  [class*="bg-f1-carbon"],
+  [class*="bg-zinc-"],
+  [class*="from-f1-"],
+  [class*="to-f1-"] {
+    background-color: white !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Force all text to readable dark colors */
+  [class*="text-f1-white"],
+  [class*="text-zinc-1"],
+  [class*="text-zinc-2"],
+  [class*="text-zinc-3"],
+  [class*="text-zinc-4"],
+  [class*="text-f1-silver"],
+  [class*="text-white"] {
+    color: #333 !important;
+  }
+
+  /* Keep accent colors for driver differentiation */
+  [class*="text-f1-red"] {
+    color: #e10600 !important;
+  }
+  [class*="text-accent-cyan"] {
+    color: #0891b2 !important;
+  }
+
+  /* Headings */
+  h1, h2, h3, h4, h5, h6 {
+    color: #111 !important;
+    -webkit-text-fill-color: #111 !important;
+    background: none !important;
+    -webkit-background-clip: unset !important;
+    background-clip: unset !important;
+  }
+
+  /* Keep driver name accent colors */
+  h2 .text-f1-red,
+  h2 [class*="text-f1-red"] {
+    color: #e10600 !important;
+    -webkit-text-fill-color: #e10600 !important;
+  }
+  h2 .text-accent-cyan,
+  h2 [class*="text-accent-cyan"] {
+    color: #0891b2 !important;
+    -webkit-text-fill-color: #0891b2 !important;
+  }
+
+  /* Cards: clean bordered look */
+  [class*="rounded-2xl"],
+  [class*="rounded-xl"],
+  [class*="GlassCard"] {
     border: 1px solid #ddd !important;
+    border-radius: 8px !important;
     background: white !important;
     box-shadow: none !important;
+    padding: 12px !important;
   }
 
-  /* Header styling for print */
-  h1, h2, h3 {
-    color: black !important;
-    -webkit-text-fill-color: black !important;
-    background: none !important;
-  }
-
-  /* Table styling for print */
+  /* Tables */
   table {
     border-collapse: collapse;
+    width: 100%;
   }
 
   td, th {
-    border: 1px solid #ddd;
-    padding: 8px;
+    border: 1px solid #ddd !important;
+    padding: 6px 10px !important;
+    color: #111 !important;
+    background: white !important;
   }
 
-  /* Page breaks */
-  .print-break-before {
+  th {
+    background: #f5f5f5 !important;
+    font-weight: 600 !important;
+  }
+
+  tr:nth-child(even) td {
+    background: #fafafa !important;
+  }
+
+  /* Stat bars: ensure visible in print */
+  [class*="bg-f1-red"] {
+    background-color: #e10600 !important;
+  }
+  [class*="bg-accent-cyan"] {
+    background-color: #0891b2 !important;
+  }
+
+  /* Each major section starts on a new page */
+  .print-page {
     page-break-before: always;
+    margin-top: 0 !important;
+    padding-top: 0.5cm;
   }
 
-  .print-break-after {
-    page-break-after: always;
+  /* Driver cards section: first section, no page break before */
+  .print-section {
+    page-break-before: auto;
+    break-inside: auto;
   }
 
-  /* Adjust container widths */
-  .max-w-6xl {
+  /* Prevent individual cards from breaking across pages */
+  .print-section > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Container adjustments */
+  .max-w-6xl,
+  [class*="max-w-[1800px]"] {
     max-width: 100% !important;
     padding: 0 !important;
+    margin: 0 !important;
   }
 
-  /* Show URL for links */
+  /* Hide dot grid in print */
+  .dot-grid-bg {
+    display: none !important;
+  }
+
+  /* Grid adjustments - keep 2-col layout in print */
+  .md\:grid-cols-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+
+  /* Remove decorative elements */
+  [class*="absolute"],
+  [class*="bg-gradient"] {
+    position: static !important;
+  }
+  .absolute.inset-0 {
+    display: none !important;
+  }
+
+  /* Borders: clean and subtle */
+  [class*="border-f1-"],
+  [class*="border-accent-"],
+  [class*="border-zinc-"],
+  [class*="border-white/"] {
+    border-color: #ddd !important;
+  }
+
+  /* Team color strips - keep them visible */
+  [class*="TeamColorStrip"] {
+    print-color-adjust: exact !important;
+  }
+
+  /* Images: show driver photos and car images */
+  img {
+    max-height: 60px !important;
+    object-fit: contain !important;
+  }
+
+  /* Don't show link URLs in print */
   a[href]:after {
-    content: " (" attr(href) ")";
-    font-size: 0.8em;
-    color: #666;
+    content: none !important;
   }
 
-  /* Footer with page info */
-  @page {
-    margin: 1.5cm;
+  /* Recharts: ensure SVGs print */
+  .recharts-wrapper,
+  .recharts-surface {
+    overflow: visible !important;
+  }
+
+  svg {
+    print-color-adjust: exact !important;
+  }
+
+  /* Print footer on every page */
+  .print-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9px;
+    color: #999;
+    padding: 4px 0;
   }
 }
