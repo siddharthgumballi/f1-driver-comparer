@@ -1,118 +1,103 @@
-# F1 Driver Comparer 🏎️
+# F1 Driver Comparer
 
-A modern web application for comparing Formula 1 drivers' statistics and head-to-head performance. Built with React, TypeScript, Vite, and Tailwind CSS.
+**The ultimate head-to-head F1 statistics tool.** Pick any two drivers from 70+ years of Formula 1 history, and instantly see who comes out on top — career stats, race-by-race breakdowns, championship timelines, constructor stints, and more. Then flip to the **"What If?"** page to rewrite history by recalculating every career under any scoring system ever used.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub stars](https://img.shields.io/github/stars/siddharthgumballi/f1-driver-comparer?style=social)](https://github.com/siddharthgumballi/f1-driver-comparer/stargazers)
 
-## 🚀 Features
+---
 
-- Compare any two F1 drivers' career statistics
-- Head-to-head race performance comparison
-- **Enhanced Constructor History**: Visual timeline showing team stints with specific statistics for each period
-- **Stint-Specific Statistics**: Each constructor stint shows only the stats from that specific time period
-- **Responsive Driver Stats Table**: Clean, organized table format for driver statistics
-- **Dark/Light Theme Support**: Toggle between dark and light modes
-- **Dynamic Driver Portraits**: Automatically fetches high-res photos from the F1 CDN or Wikipedia (with smart fallbacks) so even legacy drivers look authentic
-- **Team-Branded Loading Animation**: Custom Framer Motion F1 car animation replaces generic spinners to keep the app on-theme while data loads
-- Visual progress bars for easy comparison
-- Responsive design that works on all devices
-- Fast and efficient data loading with caching
+## What You Can Do
 
-## 📊 Data Sources
+### Driver Comparer (`/`)
+- **Side-by-side stat cards** — wins, podiums, poles, DNF rate, avg finish, points, and 15 total metrics with spring-animated counters
+- **Head-to-Head analysis** — compare performance only in races where both drivers competed, with direct finish comparisons
+- **Career Progression charts** — line chart and interactive pie chart views for points, wins, and podiums across seasons
+- **Race-by-Race Breakdown** — every shared race listed with position badges, filterable by season
+- **Championship Timeline** — visual timeline mapping trophy-winning years for both drivers on a shared axis
+- **Constructor History** — team stints broken into separate periods with per-stint stats and year-correct car liveries
+- **Season Breakdown** — expandable per-season tables with mini bar charts for wins and points
 
-- [Ergast API](http://ergast.com/mrd/) - Primary source for driver and constructor data
-- [OpenF1 API](https://theoehrly.github.io/OpenF1/) - Additional race data and statistics
-- Official F1 media for team car images (placeholder/fallback images)
+### What If? Points Normalizer (`/what-if`)
+- **7 historical scoring presets** — from the 1950s 8-6-4-3-2 system through the modern 25-point era to 2025-present (no fastest lap bonus)
+- **Custom scoring editor** — define your own points-per-position, fastest lap bonus, and top-N requirement
+- **Single driver or two-driver mode** — recalculate one driver's career, or compare how a scoring change affects two drivers differently
+- **Season picker** — drill into any individual championship year to see close title fights under alternate rules
+- **"Who benefits more?"** analysis — automatic detection of which driver gains the most from a scoring system change
+- **Actual vs Recalculated charts** — solid vs dashed line overlays showing the scoring delta per season
 
-## 🛠️ Tech Stack
+### Shared Features
+- **Shareable URLs** — every driver selection, scoring system, and season filter is synced to the URL for instant sharing
+- **Live Mode** — toggle real-time data fetching with smart cache-busting (only current season, historical data stays cached)
+- **Dark / Light theme** — persistent toggle, full support across every component
+- **History & Favorites** — recent comparisons panel with star-to-save functionality
+- **Keyboard shortcuts** — press `?` for the full shortcut reference
+- **Print-ready layouts** — `Ctrl+P` produces a clean printable comparison
+- **Mobile-first responsive design** — touch-friendly targets, stacked layouts, and overflow handling on every screen
 
-- ⚛️ React 18
-- 🌈 TypeScript
-- ⚡ Vite
-- 🎨 Tailwind CSS (with dark mode support)
-- 🎭 Framer Motion (animations)
-- 📦 LocalStorage for caching
+---
 
-## 🎨 Recent Major Updates
+## Tech Stack
 
-### Constructor History Enhancement
-- **Split Constructor Stints**: Automatically breaks down continuous periods when drivers switch teams and return
-- **Stint-Specific Stats**: Each stint displays only the statistics from that particular time period
-- **Visual Timeline**: Clean card-based layout showing team transitions
-- **Team Car Images**: Placeholder images for constructor identification (uses fallback images)
+| Layer | Tech |
+|-------|------|
+| Framework | React 18 + TypeScript |
+| Build | Vite |
+| Routing | React Router v7 |
+| Styling | Tailwind CSS (dark mode, glassmorphism) |
+| Charts | Recharts (line, bar, pie) |
+| Animation | Framer Motion (spring counters, staggered lists, page transitions) |
+| Data | Ergast F1 API + OpenF1 API |
+| Caching | localStorage with 5-minute TTL + smart live-mode busting |
 
-### Theme System
-- **Dark/Light Mode Toggle**: Full theme switching capability
-- **Persistent Theme Preference**: Saves user's theme choice in localStorage
-- **Consistent Styling**: Proper dark/light mode support across all components
+---
 
-### UI Improvements
-- **Table-Based Driver Stats**: Replaced grid layout with clean, organized table format
-- **Enhanced Visual Design**: Improved borders, backgrounds, and spacing
-- **Better Color Scheme**: Consistent color usage in both light and dark modes
-
-### Driver Imagery Pipeline
-- **Legacy Portrait Fetcher**: Wikipedia-based fallback (with portrait + description heuristics) fills in photos for historic drivers when F1’s CDN has gaps
-- **Per-Driver Overrides**: Manual URL overrides for notable alumni (Schumacher, Vettel, Ricciardo, etc.) to guarantee high-quality imagery
-- **Dynamic Number Overrides**: Champions like Lando Norris automatically inherit the correct #1 plate across the UI
-- **Initials Fallback**: When no safe photo exists, stylized initials keep the layout balanced while signalling missing art
-
-## 🚀 Quick Start
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/siddharthgumballi/f1-driver-comparer.git
-   cd f1-driver-comparer
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-3. **Start the development server**
-   ```bash
-   npm run dev
-   ```
-
-4. **Open your browser**
-   Open the URL shown in the terminal (usually http://localhost:5173)
-
-## 🌍 Production Build
-
-To create a production build:
+## Quick Start
 
 ```bash
-npm run build
+git clone https://github.com/siddharthgumballi/f1-driver-comparer.git
+cd f1-driver-comparer
+npm install
+npm run dev
 ```
 
-The build artifacts will be stored in the `dist/` directory.
+Open [http://localhost:5173](http://localhost:5173) and start comparing.
 
-## 📝 Notes
+### Production Build
 
-- The application uses browser's localStorage for caching API responses with a 24-hour TTL
-- All driver selections are reflected in the URL for easy sharing
-- The app is designed to be fully responsive and works on mobile devices
-- **Constructor Images**: Currently uses fallback placeholder images from F1 media (not actual car photos)
-- **Theme Persistence**: Dark/light mode preference is saved and restored on revisit
+```bash
+npm run build     # outputs to dist/
+npm run preview   # preview the production build locally
+```
 
-## 🐛 Known Issues
+---
 
-- **Car Images**: F1 media car images show placeholder/fallback images instead of actual car photos due to authentication restrictions
-- **Image URL Structure**: F1's actual car images require authentication or use a different CDN structure
+## Project Structure
 
-## 🤝 Contributing
+```
+src/
+  pages/            WhatIfPage
+  components/
+    layout/         Header, Layout, EmptyState
+    ui/             GlassCard, AnimatedCounter, StatBar, F1CarLoader, Toggle, ...
+    driver/         DriverCard, DriverAvatar, SeasonBreakdown
+    comparison/     HeadToHead, RaceByRaceBreakdown, ChampionshipTimeline, ConstructorHistory
+    charts/         CareerProgressionChart
+    what-if/        ScoringSystemSelector, DriverSummaryCards, SeasonComparisonChart,
+                    TwoDriverComparison, TopDifferencesTable, SeasonPicker
+  hooks/            useDarkMode, usePointsNormalizer, useUrlState, useComparisonHistory, ...
+  lib/              ergast (API + caching), pointsSystems (scoring engine), teamColors, ...
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+---
 
-## 📄 License
+## Data Sources
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- **[Ergast F1 API](http://ergast.com/mrd/)** — race results, driver standings, constructor data (1950-present)
+- **[OpenF1 API](https://openf1.org/)** — live session data overlay for current season
+- **F1 Media CDN** — driver portraits and team car liveries (with Wikipedia and initials fallbacks)
 
-## 🙏 Acknowledgments
+---
 
-- [Ergast API](http://ergast.com/mrd/) for the F1 data
-- [OpenF1](https://theoehrly.github.io/OpenF1/) for additional race data
-- [Tailwind CSS](https://tailwindcss.com/) for styling
-- [Framer Motion](https://www.framer.com/motion/) for animations
+## License
+
+MIT — see [LICENSE](LICENSE).
