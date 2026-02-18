@@ -160,16 +160,7 @@ export default function App() {
   const showEmptyState = !driverA && !driverB && !loadingA && !loadingB
 
   return (
-    <div className="relative min-h-screen bg-white dark:bg-f1-black text-zinc-900 dark:text-f1-white px-4 md:px-6 lg:px-10 py-6 overflow-hidden">
-      {/* Dot Grid Background */}
-      <div className="absolute inset-0 -z-10 dot-grid-bg no-print" />
-
-      <motion.div
-        className="max-w-[1800px] mx-auto"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5 }}
-      >
+    <>
         <div className="no-print">
           <Header
             live={live}
@@ -378,7 +369,6 @@ export default function App() {
         <div className="hidden print:block print-footer">
           F1 Driver Comparer &middot; Generated {new Date().toLocaleDateString()} &middot; Data from Ergast F1 API
         </div>
-      </motion.div>
-    </div>
+    </>
   )
 }

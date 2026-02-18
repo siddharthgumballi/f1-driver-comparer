@@ -53,6 +53,7 @@ export function AnimatedCounter({
     return `${prefix}${formatted}${suffix}`
   })
 
+  // Initial scroll-triggered animation
   useEffect(() => {
     if (animateOnView && !isInView) return
     if (hasAnimated && animateOnView) return
@@ -65,13 +66,16 @@ export function AnimatedCounter({
     return () => clearTimeout(timeout)
   }, [value, isInView, animateOnView, delay, spring, hasAnimated])
 
-  // Reset animation when value changes
+  // Update to new value when it changes after initial animation
   useEffect(() => {
     if (!animateOnView) {
       spring.set(0)
       setTimeout(() => spring.set(value), 50)
+    } else if (hasAnimated) {
+      // Already animated once on scroll — smoothly transition to new value
+      spring.set(value)
     }
-  }, [value, animateOnView, spring])
+  }, [value, animateOnView, spring, hasAnimated])
 
   const highlightClass = isBetter
     ? 'text-accent-neon font-bold'
