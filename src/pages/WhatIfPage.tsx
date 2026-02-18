@@ -1,9 +1,11 @@
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import DriverSelect from '../components/DriverSelect'
 import { GlassCard } from '../components/ui/GlassCard'
 import { F1CarLoader } from '../components/ui/F1CarLoader'
+import { DriverAvatar } from '../components/driver/DriverAvatar'
 import { useDarkMode } from '../hooks/useDarkMode'
 import { usePointsNormalizer } from '../hooks/usePointsNormalizer'
+import type { Driver } from '../types'
 import {
   WhatIfHeader,
   ScoringSystemSelector,
@@ -13,6 +15,56 @@ import {
   TwoDriverComparison,
   SeasonPicker,
 } from '../components/what-if'
+
+function DriverPreview({
+  driver,
+  accent,
+  champYears,
+  lastSeason,
+}: {
+  driver: Driver
+  accent: 'red' | 'cyan'
+  champYears: number[]
+  lastSeason: number | null
+}) {
+  const accentColor = accent === 'red' ? 'text-f1-red' : 'text-accent-cyan'
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -10 }}
+      transition={{ duration: 0.3 }}
+      className="flex items-center gap-4 mt-4"
+    >
+      <DriverAvatar
+        driver={driver}
+        accent={accent}
+        lastSeason={lastSeason}
+        size="lg"
+      />
+      <div className="flex-1 min-w-0">
+        <div className={`text-lg font-bold ${accentColor} truncate`}>
+          {driver.givenName} {driver.familyName}
+        </div>
+        <div className="text-xs text-f1-silver mt-0.5">
+          {driver.nationality}
+          {driver.permanentNumber && ` · #${driver.permanentNumber}`}
+        </div>
+        {champYears.length > 0 && (
+          <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-accent-gold/15 border border-accent-gold/30">
+            <svg className="w-3.5 h-3.5 text-accent-gold" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M5 3h14l-1.5 6H20a1 1 0 011 1v1a5 5 0 01-3.5 4.77V17h1a1 1 0 110 2H5.5a1 1 0 110-2h1v-1.23A5 5 0 013 11v-1a1 1 0 011-1h2.5L5 3zm3.5 0l1 4h5l1-4h-7zM7 11H5v.5A3 3 0 007.5 14.37L7 11zm10 0l-.5 3.37A3 3 0 0019 11.5V11h-2z" />
+            </svg>
+            <span className="text-xs font-bold text-accent-gold">
+              {champYears.length}x World Champion
+            </span>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  )
+}
 
 export function WhatIfPage() {
   const { darkMode, setDarkMode } = useDarkMode()
@@ -32,6 +84,10 @@ export function WhatIfPage() {
     loadingB,
     error,
     comparisonData,
+    champYearsA,
+    champYearsB,
+    lastSeasonA,
+    lastSeasonB,
   } = usePointsNormalizer()
 
   const isLoading = loadingA || loadingB
@@ -47,28 +103,52 @@ export function WhatIfPage() {
 
       {/* Configuration Row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-8 mb-8 relative z-[100]">
-        <GlassCard variant="red" className="p-6 relative z-[100]">
+        <GlassCard variant="red" className="p-6 relative z-[103]">
           <DriverSelect
             label="Driver A (optional)"
             value={driverA}
             onChange={setDriverA}
             disabled={loadingA}
           />
+          <AnimatePresence mode="wait">
+            {driverA && !loadingA && (
+              <DriverPreview
+                key={driverA.driverId}
+                driver={driverA}
+                accent="red"
+                champYears={champYearsA}
+                lastSeason={lastSeasonA}
+              />
+            )}
+          </AnimatePresence>
         </GlassCard>
 
-        <GlassCard variant="cyan" className="p-6 relative z-[100]">
+        <GlassCard variant="cyan" className="p-6 relative z-[102]">
           <DriverSelect
             label="Driver B (optional)"
             value={driverB}
             onChange={setDriverB}
             disabled={loadingB}
           />
+          <AnimatePresence mode="wait">
+            {driverB && !loadingB && (
+              <DriverPreview
+                key={driverB.driverId}
+                driver={driverB}
+                accent="cyan"
+                champYears={champYearsB}
+                lastSeason={lastSeasonB}
+              />
+            )}
+          </AnimatePresence>
         </GlassCard>
 
-        <ScoringSystemSelector
-          selectedSystem={selectedSystem}
-          onSelect={setSelectedSystem}
-        />
+        <div className="relative z-[101]">
+          <ScoringSystemSelector
+            selectedSystem={selectedSystem}
+            onSelect={setSelectedSystem}
+          />
+        </div>
       </div>
 
       {/* Season Filter (shown once data is loaded) */}

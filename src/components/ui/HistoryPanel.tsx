@@ -90,7 +90,7 @@ export function HistoryPanel({
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              className="absolute right-0 mt-2 w-80 rounded-xl bg-f1-carbon border border-f1-steel shadow-glass-lg z-50 overflow-hidden"
+              className="absolute right-0 mt-2 w-80 max-w-[calc(100vw-2rem)] rounded-xl bg-f1-carbon border border-f1-steel shadow-glass-lg z-50 overflow-hidden"
             >
               {/* Tabs */}
               <div className="flex border-b border-f1-steel">

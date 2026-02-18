@@ -142,7 +142,7 @@ export function DriverCard({ stats, accent, label }: DriverCardProps) {
               <img
                 src={carImage.src}
                 alt={carImage.alt}
-                className="h-14 w-24 object-contain object-right"
+                className="h-10 w-16 sm:h-14 sm:w-24 object-contain object-right"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement
                   target.style.display = 'none'

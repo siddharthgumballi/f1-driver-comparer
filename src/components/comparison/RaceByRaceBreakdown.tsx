@@ -102,14 +102,14 @@ export function RaceByRaceBreakdown({
         <table className="w-full text-sm">
           <thead className="bg-zinc-100 dark:bg-f1-carbon text-f1-silver">
             <tr>
-              <th className="px-4 py-2 text-left font-medium">Race</th>
-              <th className="px-4 py-2 text-center font-medium text-f1-red">
+              <th className="px-2 py-2 sm:px-4 text-left font-medium">Race</th>
+              <th className="px-2 py-2 sm:px-4 text-center font-medium text-f1-red">
                 <span className="inline-flex items-center justify-center gap-1.5">
                   <NationalityFlag nationality={driverA.nationality} size="sm" />
                   {driverA.familyName}
                 </span>
               </th>
-              <th className="px-4 py-2 text-center font-medium text-accent-cyan">
+              <th className="px-2 py-2 sm:px-4 text-center font-medium text-accent-cyan">
                 <span className="inline-flex items-center justify-center gap-1.5">
                   <NationalityFlag nationality={driverB.nationality} size="sm" />
                   {driverB.familyName}
@@ -127,20 +127,20 @@ export function RaceByRaceBreakdown({
                   transition={{ delay: index * 0.02 }}
                   className="hover:bg-zinc-50 dark:hover:bg-f1-carbon/50"
                 >
-                  <td className="px-4 py-2">
-                    <div className="font-medium text-zinc-900 dark:text-zinc-100">
+                  <td className="px-2 py-2 sm:px-4">
+                    <div className="font-medium text-zinc-900 dark:text-zinc-100 text-xs sm:text-sm">
                       {race.raceName}
                     </div>
-                    <div className="text-xs text-f1-silver">{race.season}</div>
+                    <div className="text-[10px] sm:text-xs text-f1-silver">{race.season}</div>
                   </td>
-                  <td className="px-4 py-2 text-center">
+                  <td className="px-2 py-2 sm:px-4 text-center">
                     <PositionBadge
                       position={race.posA}
                       isWinner={race.winner === 'a'}
                       accent="red"
                     />
                   </td>
-                  <td className="px-4 py-2 text-center">
+                  <td className="px-2 py-2 sm:px-4 text-center">
                     <PositionBadge
                       position={race.posB}
                       isWinner={race.winner === 'b'}

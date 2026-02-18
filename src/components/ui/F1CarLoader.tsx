@@ -13,7 +13,7 @@ export function F1CarLoader({ variant = 'red', message = 'Loading...' }: F1CarLo
   return (
     <div className="flex flex-col items-center gap-6">
       {/* Track with car */}
-      <div className="relative w-80 h-24 overflow-hidden">
+      <div className="relative w-64 sm:w-80 h-24 overflow-hidden">
         {/* Animated F1 Car */}
         <motion.div
           className="absolute top-1/2 -translate-y-1/2"

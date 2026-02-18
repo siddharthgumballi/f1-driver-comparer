@@ -232,13 +232,13 @@ export default function App() {
 
         {/* Driver Selectors */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-8 mb-8 relative z-[100] no-print">
-          <div ref={driverASelectRef}>
-            <GlassCard variant="red" className="p-6 relative z-[100]">
+          <div ref={driverASelectRef} className="relative z-[102]">
+            <GlassCard variant="red" className="p-6">
               <DriverSelect label="Driver A" value={driverA} onChange={setDriverA} disabled={loadingA} />
             </GlassCard>
           </div>
-          <div ref={driverBSelectRef}>
-            <GlassCard variant="cyan" className="p-6 relative z-[100]">
+          <div ref={driverBSelectRef} className="relative z-[101]">
+            <GlassCard variant="cyan" className="p-6">
               <DriverSelect label="Driver B" value={driverB} onChange={setDriverB} disabled={loadingB} />
             </GlassCard>
           </div>

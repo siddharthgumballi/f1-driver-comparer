@@ -102,7 +102,7 @@ export function ScoringSystemSelector({ selectedSystem, onSelect }: Props) {
                 <label className="text-xs text-f1-silver uppercase tracking-wider block mb-1.5">
                   Points per position (P1–P10)
                 </label>
-                <div className="grid grid-cols-5 gap-1.5">
+                <div className="grid grid-cols-5 gap-1 sm:gap-1.5">
                   {customPoints.map((pts, i) => (
                     <div key={i} className="relative">
                       <label className="text-[10px] text-f1-silver absolute -top-0.5 left-1 bg-white dark:bg-f1-carbon px-0.5">

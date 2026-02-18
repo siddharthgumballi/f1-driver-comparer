@@ -30,7 +30,7 @@ export function KeyboardShortcutsHelp() {
       {/* Help button */}
       <motion.button
         onClick={() => setIsOpen(true)}
-        className="flex items-center justify-center w-8 h-8 rounded-lg bg-f1-carbon border border-f1-steel hover:border-accent-cyan transition-colors text-sm font-medium text-f1-silver hover:text-f1-white"
+        className="flex items-center justify-center w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-f1-carbon border border-f1-steel hover:border-accent-cyan transition-colors text-sm font-medium text-f1-silver hover:text-f1-white"
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         aria-label="Keyboard shortcuts"

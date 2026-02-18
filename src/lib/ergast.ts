@@ -167,13 +167,18 @@ async function fetchJSON<T>(url: string, retryCount = 0): Promise<T> {
     await new Promise(resolve => setTimeout(resolve, RATE_LIMIT_DELAY - timeSinceLastRequest));
   }
 
-  // Add cache-busting when in live mode
-  const bust = liveMode ? (url.includes('?') ? `&_ts=${Date.now()}` : `?_ts=${Date.now()}`) : ''
-  const finalUrl = url + bust
-  const cacheKey = `erg:${finalUrl}`
+  // In live mode, only cache-bust current/recent season data.
+  // Historical data (before current year) never changes and should always use cache.
+  const currentYear = new Date().getFullYear()
+  const isHistorical = !url.includes(`/${currentYear}/`) && !url.includes(`/${currentYear - 1}/`)
+  const shouldBustCache = liveMode && !isHistorical
 
-  // Use cache in non-live mode
-  if (!liveMode) {
+  const bust = shouldBustCache ? (url.includes('?') ? `&_ts=${Date.now()}` : `?_ts=${Date.now()}`) : ''
+  const finalUrl = url + bust
+  const cacheKey = `erg:${url}` // Cache key uses original URL (without timestamp)
+
+  // Use cache when not busting
+  if (!shouldBustCache) {
     const cached = cacheGet<T>(cacheKey);
     if (cached) return cached;
   }
@@ -200,7 +205,7 @@ async function fetchJSON<T>(url: string, retryCount = 0): Promise<T> {
     }
 
     const data = await res.json();
-    if (!liveMode) cacheSet(cacheKey, data);
+    cacheSet(cacheKey, data);
     return data as T;
   } catch (error) {
     if (retryCount < MAX_RETRIES) {
@@ -482,33 +487,33 @@ async function getDriverSprintResults(driverId: string): Promise<Array<{ season:
   return results
 }
 
-async function getChampionshipsCount(driverId: string): Promise<number> {
-  try {
-    // Fallback implementation: attempt to infer seasons from results and call per-season standings
-    const results = await getDriverResults(driverId)
-    const seasons = Array.from(new Set(results.map(r => parseInt(r.season, 10)))).sort((a,b)=>a-b)
-    return await getChampionshipsCountForSeasons(driverId, seasons)
-  } catch {
-    return 0
-  }
+// Fetch ALL seasonal standings for a driver in one paginated call
+// instead of making a separate API call per season
+async function getDriverStandings(driverId: string): Promise<Array<{ season: number; position: number }>> {
+  const pageLimit = 100
+  let offset = 0
+  let total = 0
+  const standings: Array<{ season: number; position: number }> = []
+  do {
+    const url = `${API}/drivers/${driverId}/driverStandings.json?limit=${pageLimit}&offset=${offset}`
+    const data = await fetchJSON<any>(url)
+    const lists: any[] = data?.MRData?.StandingsTable?.StandingsLists || []
+    for (const list of lists) {
+      const season = parseInt(list.season, 10)
+      const entry = list.DriverStandings?.[0]
+      if (entry) {
+        standings.push({ season, position: parseInt(String(entry.position), 10) })
+      }
+    }
+    total = Number(data?.MRData?.total || lists.length)
+    offset += pageLimit
+  } while (standings.length < total)
+  return standings
 }
 
-async function getChampionshipsCountForSeasons(driverId: string, seasons: number[]): Promise<number> {
-  let count = 0
-  for (const season of seasons) {
-    try {
-      const url = `${API}/${season}/driverStandings.json?limit=1000`
-      const data = await fetchJSON<any>(url)
-      const lists: any[] = data?.MRData?.StandingsTable?.StandingsLists || []
-      const first = lists[0]?.DriverStandings?.[0]
-      if (first && String(first.position) === '1' && first.Driver?.driverId === driverId) {
-        count += 1
-      }
-    } catch {
-      // ignore and continue
-    }
-  }
-  return count
+async function getChampionshipsCountForSeasons(driverId: string, _seasons: number[]): Promise<number> {
+  const standings = await getDriverStandings(driverId)
+  return standings.filter(s => s.position === 1).length
 }
 
 export type HeadToHead = {
@@ -535,24 +540,8 @@ export async function getDriverRaceResults(driverId: string): Promise<RaceResult
 
 // Get championship winning years for a driver
 export async function getChampionshipYears(driverId: string): Promise<number[]> {
-  const results = await getDriverResults(driverId)
-  const seasons = Array.from(new Set(results.map(r => parseInt(r.season, 10)))).sort((a,b)=>a-b)
-  const years: number[] = []
-
-  for (const season of seasons) {
-    try {
-      const url = `${API}/${season}/driverStandings.json?limit=1000`
-      const data = await fetchJSON<any>(url)
-      const lists: any[] = data?.MRData?.StandingsTable?.StandingsLists || []
-      const first = lists[0]?.DriverStandings?.[0]
-      if (first && String(first.position) === '1' && first.Driver?.driverId === driverId) {
-        years.push(season)
-      }
-    } catch {
-      // ignore and continue
-    }
-  }
-  return years
+  const standings = await getDriverStandings(driverId)
+  return standings.filter(s => s.position === 1).map(s => s.season).sort((a, b) => a - b)
 }
 
 export async function getHeadToHead(aId: string, bId: string): Promise<HeadToHead> {

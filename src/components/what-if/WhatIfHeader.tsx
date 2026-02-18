@@ -34,7 +34,7 @@ export function WhatIfHeader({ darkMode, onDarkModeChange }: WhatIfHeaderProps) 
           </motion.div>
 
           <motion.h1
-            className="text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-accent-gold to-amber-400 bg-clip-text text-transparent"
+            className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-accent-gold to-amber-400 bg-clip-text text-transparent"
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}

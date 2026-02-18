@@ -50,7 +50,7 @@ export function SeasonPicker({ seasons, selectedSeason, onSelect }: Props) {
           <button
             ref={selectedSeason === null ? activeRef : undefined}
             onClick={() => onSelect(null)}
-            className={`flex-shrink-0 px-3 py-1.5 text-xs font-semibold rounded-full border transition-all duration-200 ${
+            className={`flex-shrink-0 px-3 py-2 sm:py-1.5 text-xs font-semibold rounded-full border transition-all duration-200 ${
               selectedSeason === null
                 ? 'bg-accent-gold/15 border-accent-gold/50 text-accent-gold shadow-glow-gold'
                 : 'bg-zinc-100 dark:bg-f1-carbon border-zinc-300 dark:border-f1-steel text-f1-silver hover:border-accent-gold/30 hover:text-accent-gold'
@@ -63,7 +63,7 @@ export function SeasonPicker({ seasons, selectedSeason, onSelect }: Props) {
               key={season}
               ref={selectedSeason === season ? activeRef : undefined}
               onClick={() => onSelect(season)}
-              className={`flex-shrink-0 px-3 py-1.5 text-xs font-mono font-semibold rounded-full border transition-all duration-200 ${
+              className={`flex-shrink-0 px-3 py-2 sm:py-1.5 text-xs font-mono font-semibold rounded-full border transition-all duration-200 ${
                 selectedSeason === season
                   ? 'bg-accent-gold/15 border-accent-gold/50 text-accent-gold shadow-glow-gold'
                   : 'bg-zinc-100 dark:bg-f1-carbon border-zinc-300 dark:border-f1-steel text-f1-silver hover:border-accent-gold/30 hover:text-accent-gold'

@@ -121,7 +121,7 @@ export function ChampionshipTimeline({
       </div>
 
       {/* Timeline Container */}
-      <div className="relative mx-4">
+      <div className="relative mx-0 sm:mx-4 overflow-x-auto">
         {/* Driver A Championships (above line) */}
         <div className="h-20 relative mb-4">
           {groupsA.map((group, index) => (

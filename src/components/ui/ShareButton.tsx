@@ -120,7 +120,7 @@ export function ShareButton({ driverA, driverB }: ShareButtonProps) {
               initial={{ opacity: 0, scale: 0.95, y: -10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
-              className="absolute right-0 mt-2 w-48 rounded-xl bg-f1-carbon border border-f1-steel shadow-glass-lg z-50 overflow-hidden"
+              className="absolute right-0 mt-2 w-48 max-w-[calc(100vw-2rem)] rounded-xl bg-f1-carbon border border-f1-steel shadow-glass-lg z-50 overflow-hidden"
             >
               <div className="p-2 space-y-1">
                 <button

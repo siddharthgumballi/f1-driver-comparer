@@ -56,7 +56,7 @@ export function SeasonBreakdown({ seasons, accent }: SeasonBreakdownProps) {
           >
             <div className="px-4 pb-4">
               <div className="overflow-x-auto -mx-4 px-4">
-                <table className="w-full min-w-[400px] text-[10px]">
+                <table className="w-full min-w-[320px] sm:min-w-[400px] text-[10px]">
                   <thead className="bg-zinc-100/70 dark:bg-f1-carbon/70 text-f1-silver dark:text-zinc-400">
                     <tr>
                       <th className="py-1.5 text-left font-medium">Season</th>

@@ -188,7 +188,7 @@ export function CareerProgressionChart({
           <div className="flex rounded-lg overflow-hidden border border-zinc-300 dark:border-f1-steel/50">
             <button
               onClick={() => setView('line')}
-              className={`px-3 py-1 text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+              className={`px-3 py-2 sm:py-1 text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
                 view === 'line'
                   ? 'bg-accent-cyan text-white'
                   : 'bg-zinc-100 dark:bg-f1-carbon text-f1-silver hover:bg-zinc-200 dark:hover:bg-f1-steel'
@@ -203,7 +203,7 @@ export function CareerProgressionChart({
             </button>
             <button
               onClick={() => setView('pie')}
-              className={`px-3 py-1 text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
+              className={`px-3 py-2 sm:py-1 text-xs font-medium transition-all duration-200 flex items-center gap-1.5 ${
                 view === 'pie'
                   ? 'bg-accent-cyan text-white'
                   : 'bg-zinc-100 dark:bg-f1-carbon text-f1-silver hover:bg-zinc-200 dark:hover:bg-f1-steel'
@@ -237,12 +237,12 @@ export function CareerProgressionChart({
         </div>
       </div>
 
-      <div className="h-80">
+      <div className={view === 'line' ? 'h-64 sm:h-80' : 'h-auto sm:h-80'}>
         {view === 'line' ? (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
               data={chartData}
-              margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+              margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -252,7 +252,7 @@ export function CareerProgressionChart({
               <XAxis
                 dataKey="year"
                 stroke="#6B6B6B"
-                fontSize={12}
+                fontSize={11}
                 tickLine={false}
                 axisLine={{ stroke: 'rgba(107, 107, 107, 0.3)' }}
               />
@@ -297,7 +297,7 @@ export function CareerProgressionChart({
             </LineChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-full flex items-center justify-between gap-4 px-2">
+          <div className="h-full flex flex-col sm:flex-row items-center sm:justify-between gap-4 px-2 overflow-y-auto sm:overflow-y-visible">
             {/* Driver A Card - Left */}
             <div
               className={`flex-1 rounded-xl p-4 transition-all duration-300 ${
@@ -352,7 +352,7 @@ export function CareerProgressionChart({
 
             {/* Pie Chart - Center (no 3D tilt, bigger) */}
             <div
-              className="w-64 h-full flex-shrink-0 relative"
+              className="w-full sm:w-64 h-48 sm:h-full flex-shrink-0 relative"
               onMouseLeave={onPieLeave}
             >
               <ResponsiveContainer width="100%" height="100%">

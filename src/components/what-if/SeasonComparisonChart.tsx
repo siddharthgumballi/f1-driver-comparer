@@ -29,11 +29,11 @@ export function SeasonComparisonChart({ resultA, resultB, comparisonData }: Prop
         Season-by-Season Comparison
       </h2>
 
-      <div className="h-80">
+      <div className="h-64 sm:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
-            margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 5, right: 10, left: 0, bottom: 5 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"

@@ -52,19 +52,19 @@ function SummaryCard({
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-xs text-f1-silver uppercase tracking-wider mb-1">Actual</div>
-            <div className="text-2xl font-bold tabular-nums text-zinc-800 dark:text-f1-white">
+            <div className="text-lg sm:text-2xl font-bold tabular-nums text-zinc-800 dark:text-f1-white">
               <AnimatedCounter value={result.careerActualTotal} decimals={1} />
             </div>
           </div>
           <div>
             <div className="text-xs text-f1-silver uppercase tracking-wider mb-1">Recalculated</div>
-            <div className="text-2xl font-bold tabular-nums text-zinc-800 dark:text-f1-white">
+            <div className="text-lg sm:text-2xl font-bold tabular-nums text-zinc-800 dark:text-f1-white">
               <AnimatedCounter value={result.careerRecalculatedTotal} decimals={1} />
             </div>
           </div>
           <div>
             <div className="text-xs text-f1-silver uppercase tracking-wider mb-1">Difference</div>
-            <div className={`text-2xl font-bold tabular-nums ${deltaColor}`}>
+            <div className={`text-lg sm:text-2xl font-bold tabular-nums ${deltaColor}`}>
               <AnimatedCounter
                 value={result.careerDelta}
                 decimals={1}

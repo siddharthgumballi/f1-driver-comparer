@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import type { Driver, RaceResult } from '../types'
-import { getDriverRaceResults, getDriverById } from '../lib/ergast'
+import { getDriverRaceResults, getDriverById, getChampionshipYears } from '../lib/ergast'
 import {
   SCORING_SYSTEMS,
   getSystemById,
@@ -55,6 +55,8 @@ export function usePointsNormalizer() {
   const [selectedSeason, setSelectedSeason] = useState<string | null>(null) // null = all seasons
   const [racesA, setRacesA] = useState<RaceResult[]>([])
   const [racesB, setRacesB] = useState<RaceResult[]>([])
+  const [champYearsA, setChampYearsA] = useState<number[]>([])
+  const [champYearsB, setChampYearsB] = useState<number[]>([])
   const [loadingA, setLoadingA] = useState(false)
   const [loadingB, setLoadingB] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -101,18 +103,25 @@ export function usePointsNormalizer() {
     setSearchParams(params, { replace: true })
   }, [driverA?.driverId, driverB?.driverId, selectedSystem.id, selectedSeason, initialized, setSearchParams])
 
-  // Fetch races for driver A
+  // Fetch races + championship years for driver A
   useEffect(() => {
     if (!driverA) {
       setRacesA([])
+      setChampYearsA([])
       return
     }
     let cancelled = false
     setLoadingA(true)
     setError(null)
-    getDriverRaceResults(driverA.driverId)
-      .then((races) => {
-        if (!cancelled) setRacesA(races as RaceResult[])
+    Promise.all([
+      getDriverRaceResults(driverA.driverId),
+      getChampionshipYears(driverA.driverId),
+    ])
+      .then(([races, years]) => {
+        if (!cancelled) {
+          setRacesA(races as RaceResult[])
+          setChampYearsA(years)
+        }
       })
       .catch((e) => {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load driver data')
@@ -123,18 +132,25 @@ export function usePointsNormalizer() {
     return () => { cancelled = true }
   }, [driverA?.driverId])
 
-  // Fetch races for driver B
+  // Fetch races + championship years for driver B
   useEffect(() => {
     if (!driverB) {
       setRacesB([])
+      setChampYearsB([])
       return
     }
     let cancelled = false
     setLoadingB(true)
     setError(null)
-    getDriverRaceResults(driverB.driverId)
-      .then((races) => {
-        if (!cancelled) setRacesB(races as RaceResult[])
+    Promise.all([
+      getDriverRaceResults(driverB.driverId),
+      getChampionshipYears(driverB.driverId),
+    ])
+      .then(([races, years]) => {
+        if (!cancelled) {
+          setRacesB(races as RaceResult[])
+          setChampYearsB(years)
+        }
       })
       .catch((e) => {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load driver data')
@@ -144,6 +160,17 @@ export function usePointsNormalizer() {
       })
     return () => { cancelled = true }
   }, [driverB?.driverId])
+
+  // Derive last active season from race data (for driver photo selection)
+  const lastSeasonA = useMemo(() => {
+    if (racesA.length === 0) return null
+    return Math.max(...racesA.map((r) => parseInt(r.season, 10)))
+  }, [racesA])
+
+  const lastSeasonB = useMemo(() => {
+    if (racesB.length === 0) return null
+    return Math.max(...racesB.map((r) => parseInt(r.season, 10)))
+  }, [racesB])
 
   // Full career recalculation (always computed)
   const fullResultA: NormalizerResult | null = useMemo(() => {
@@ -263,5 +290,9 @@ export function usePointsNormalizer() {
     loadingB,
     error,
     comparisonData,
+    champYearsA,
+    champYearsB,
+    lastSeasonA,
+    lastSeasonB,
   }
 }
